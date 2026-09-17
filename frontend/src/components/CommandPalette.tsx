@@ -1,21 +1,21 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Shield, Phone, Landmark, Radio, X, ArrowRight, CornerDownLeft } from 'lucide-react';
-import { SyndicateNode } from '../types/syndicate';
+import { Search, X, ArrowRight, CornerDownLeft, Users, Smartphone, CreditCard, Building2, MapPin, Car } from 'lucide-react';
+import { Entity, EntityType } from '../types/intelligence';
 
 interface CommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
-  nodes: SyndicateNode[];
-  onSelectNode: (node: SyndicateNode) => void;
+  entities: Entity[];
+  onSelectEntity: (entity: Entity) => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
   isOpen,
   onClose,
-  nodes,
-  onSelectNode,
+  entities,
+  onSelectEntity,
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -29,7 +29,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }
   }, [isOpen]);
 
-  // Global Ctrl+K / Escape key handler
+  // Global Ctrl+K / Escape handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -47,134 +47,112 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   if (!isOpen) return null;
 
-  // Filter nodes matching query
   const q = query.trim().toLowerCase();
-  const filteredNodes = nodes.filter(n => {
+  const filteredEntities = entities.filter(e => {
     if (!q) return true;
     return (
-      n.name.toLowerCase().includes(q) ||
-      n.aliases.some(a => a.toLowerCase().includes(q)) ||
-      n.role.toLowerCase().includes(q) ||
-      n.telecom.primaryImei.includes(q) ||
-      n.telecom.activeTowerId.toLowerCase().includes(q) ||
-      n.telecom.linkedMsisdns.some(m => m.includes(q)) ||
-      n.financial.accountNumber.includes(q) ||
-      n.financial.bankName.toLowerCase().includes(q) ||
-      (n.financial.upiId && n.financial.upiId.toLowerCase().includes(q))
+      e.name.toLowerCase().includes(q) ||
+      e.aliases.some(a => a.toLowerCase().includes(q)) ||
+      e.type.toLowerCase().includes(q) ||
+      (e.telecom?.imei && e.telecom.imei.includes(q)) ||
+      (e.financial?.accountNumber && e.financial.accountNumber.includes(q)) ||
+      (e.location?.address && e.location.address.toLowerCase().includes(q))
     );
-  });
+  }).slice(0, 8);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % Math.max(1, filteredNodes.length));
+      setSelectedIndex(prev => (prev + 1) % Math.max(1, filteredEntities.length));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev - 1 + filteredNodes.length) % Math.max(1, filteredNodes.length));
+      setSelectedIndex(prev => (prev - 1 + filteredEntities.length) % Math.max(1, filteredEntities.length));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (filteredNodes[selectedIndex]) {
-        onSelectNode(filteredNodes[selectedIndex]);
+      if (filteredEntities[selectedIndex]) {
+        onSelectEntity(filteredEntities[selectedIndex]);
         onClose();
       }
     }
   };
 
+  const getTypeBadgeColor = (type: EntityType) => {
+    switch (type) {
+      case 'person': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'phone': return 'bg-sky-50 text-sky-700 border-sky-200';
+      case 'account': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'organization': return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'location': return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'vehicle': return 'bg-rose-50 text-rose-700 border-rose-200';
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-slate-900/50 dark:bg-black/75 backdrop-blur-xs p-4">
-      <div className="relative w-full max-w-xl bg-white dark:bg-[#0A0F1D] border border-slate-300 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col font-mono text-xs">
-        {/* Search Input Bar */}
-        <div className="flex items-center px-3.5 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0F1626]">
-          <Search className="w-4 h-4 text-blue-600 dark:text-blue-400 mr-2.5 flex-shrink-0" />
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-slate-900/40 backdrop-blur-xs p-4 select-none">
+      <div className="relative w-full max-w-xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden flex flex-col">
+        {/* Search Input */}
+        <div className="h-12 px-4 border-b border-slate-200 flex items-center space-x-3 bg-slate-50/50">
+          <Search className="w-4 h-4 text-slate-400" />
           <input
             ref={inputRef}
             type="text"
+            placeholder="Search entity name, alias, IMEI, account, location..."
             value={query}
-            onChange={(e) => {
+            onChange={e => {
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Search Suspect, Alias, IMEI, UPI ID, Bank A/C, BTS Tower..."
-            className="flex-1 bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none text-xs"
+            className="flex-1 bg-transparent border-none text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none"
           />
-          <button
-            onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white border border-slate-200 rounded text-slate-400">
+            ESC
+          </kbd>
         </div>
 
         {/* Results List */}
-        <div className="max-h-80 overflow-y-auto p-1.5 divide-y divide-slate-100 dark:divide-slate-800/60">
-          {filteredNodes.length === 0 ? (
-            <div className="py-8 text-center text-slate-500 dark:text-slate-400">
-              No criminal entities found matching query &ldquo;{query}&rdquo;
+        <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 p-1">
+          {filteredEntities.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-400">
+              No matching entities found.
             </div>
           ) : (
-            filteredNodes.map((n, idx) => {
+            filteredEntities.map((ent, idx) => {
               const isSelected = idx === selectedIndex;
+              const badgeClass = getTypeBadgeColor(ent.type);
+
               return (
                 <div
-                  key={n.id}
+                  key={ent.id}
                   onClick={() => {
-                    onSelectNode(n);
+                    onSelectEntity(ent);
                     onClose();
                   }}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`p-2.5 rounded-lg cursor-pointer flex items-center justify-between transition-colors ${
-                    isSelected ? 'bg-blue-50/90 dark:bg-blue-950/50 text-slate-900 dark:text-slate-100 border border-blue-200 dark:border-blue-800 shadow-2xs' : 'text-slate-800 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/50'
+                  className={`px-3.5 py-2.5 rounded-lg flex items-center justify-between cursor-pointer transition-colors ${
+                    isSelected ? 'bg-blue-50/80 text-blue-900' : 'hover:bg-slate-50 text-slate-800'
                   }`}
                 >
-                  <div className="flex items-center space-x-3 min-w-0">
-                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                      n.role === 'kingpin' ? 'bg-rose-500' :
-                      n.role === 'mule' ? 'bg-amber-500' :
-                      n.role === 'telecom' ? 'bg-sky-500' :
-                      n.role === 'shell' ? 'bg-purple-500' :
-                      n.role === 'enforcer' ? 'bg-orange-500' : 'bg-slate-500'
-                    }`} />
-
-                    <div className="min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold truncate text-slate-900 dark:text-slate-100">{n.name}</span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">({n.role})</span>
-                      </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate flex items-center space-x-3 mt-0.5">
-                        <span>Aliases: {n.aliases.join(', ')}</span>
-                        <span>|</span>
-                        <span>IMEI: {n.telecom.primaryImei}</span>
-                        <span>|</span>
-                        <span>A/C: #{n.financial.accountNumber}</span>
-                      </div>
-                    </div>
+                  <div className="flex items-center space-x-2.5 truncate">
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border uppercase ${badgeClass}`}>
+                      {ent.type}
+                    </span>
+                    <span className="text-xs font-semibold truncate">{ent.name}</span>
+                    {ent.aliases.length > 0 && (
+                      <span className="text-[11px] text-slate-400 truncate">
+                        ({ent.aliases[0]})
+                      </span>
+                    )}
                   </div>
 
-                  <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                      n.riskScore > 80 ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60'
-                    }`}>
-                      Risk {n.riskScore}
-                    </span>
-                    {isSelected && <CornerDownLeft className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
+                  <div className="flex items-center space-x-2 text-[11px] font-mono text-slate-400 flex-shrink-0">
+                    <span>Centrality: {ent.metrics.betweenness.toFixed(2)}</span>
+                    {isSelected && <CornerDownLeft className="w-3 h-3 text-blue-600" />}
                   </div>
                 </div>
               );
             })
           )}
-        </div>
-
-        {/* Footer info bar */}
-        <div className="px-3 py-2 bg-slate-50 dark:bg-[#0F1626] border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <span>Use ↑↓ to navigate</span>
-            <span>•</span>
-            <span>↵ to inspect</span>
-            <span>•</span>
-            <span>ESC to dismiss</span>
-          </div>
-          <div>{filteredNodes.length} matches found</div>
         </div>
       </div>
     </div>
