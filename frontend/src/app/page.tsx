@@ -1,506 +1,427 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { GovTechNavbar } from '../components/GovTechNavbar';
-import { HeroDirective } from '../components/HeroDirective';
-import { ProofMetricsStrip } from '../components/ProofMetricsStrip';
-import { InteractiveShowcase } from '../components/InteractiveShowcase';
-import { CapabilitiesGrid } from '../components/CapabilitiesGrid';
-import { StakeholderQuotes } from '../components/StakeholderQuotes';
-import { GovTechFooter } from '../components/GovTechFooter';
-
-import { TopCommandBar } from '../components/TopCommandBar';
-import { LeftDock } from '../components/LeftDock';
+import React, { useState, useMemo, useCallback } from 'react';
+import { NavigationHeader, NavigationTab } from '../components/NavigationHeader';
+import { LandingHero } from '../components/LandingHero';
 import { GraphCanvas } from '../components/GraphCanvas';
-import { TimelineScrubber } from '../components/TimelineScrubber';
-import { RightInspector } from '../components/RightInspector';
-import { DossierModal } from '../components/DossierModal';
+import { NetworkFiltersDrawer } from '../components/NetworkFiltersDrawer';
+import { EntityInspector } from '../components/EntityInspector';
+import { EntitiesView } from '../components/EntitiesView';
+import { EntityResolutionView } from '../components/EntityResolutionView';
+import { PatternsView } from '../components/PatternsView';
+import { EvidenceView } from '../components/EvidenceView';
+import { TimelineEvolutionView } from '../components/TimelineEvolutionView';
+import { AICopilotDrawer } from '../components/AICopilotDrawer';
+import { NewInvestigationModal } from '../components/NewInvestigationModal';
+import { InvestigationReportModal } from '../components/InvestigationReportModal';
 import { CommandPalette } from '../components/CommandPalette';
-import { AnomalyRadar, AnomalyType } from '../components/AnomalyRadar';
 import { EdgeEvidencePopover } from '../components/EdgeEvidencePopover';
 
 import { 
-  INITIAL_SYNDICATE_NODES, 
-  INITIAL_SYNDICATE_EDGES 
-} from '../data/syndicateData';
+  INITIAL_ENTITIES, 
+  INITIAL_RELATIONSHIPS, 
+  SYNTHETIC_EVIDENCE_CATALOG, 
+  DETECTED_PATTERNS, 
+  POTENTIAL_ENTITY_MATCHES, 
+  DEMO_CASE 
+} from '../data/intelligenceData';
 import { 
-  SyndicateNode, 
-  SyndicateEdge, 
-  EntityRole, 
-  ExtractedEntity 
-} from '../types/syndicate';
+  Entity, 
+  Relationship, 
+  EntityType, 
+  RelationshipType, 
+  EntityMatch 
+} from '../types/intelligence';
 
-export default function DefenseOperatingSystem() {
-  // Environmental Lighting Mode: 'oled' (Tactical Dark OLED) vs 'judicial' (Judicial Light Paper)
-  const [themeMode, setThemeMode] = useState<'oled' | 'judicial'>('judicial');
+export default function ChakravyuhPlatform() {
+  // Navigation
+  const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
 
-  useEffect(() => {
-    if (themeMode === 'oled') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [themeMode]);
+  // Core Dataset State
+  const [entities, setEntities] = useState<Entity[]>(INITIAL_ENTITIES);
+  const [relationships, setRelationships] = useState<Relationship[]>(INITIAL_RELATIONSHIPS);
+  const [matches, setMatches] = useState<EntityMatch[]>(POTENTIAL_ENTITY_MATCHES);
+  const [patterns, setPatterns] = useState(DETECTED_PATTERNS);
+  const [evidenceCatalog, setEvidenceCatalog] = useState(SYNTHETIC_EVIDENCE_CATALOG);
 
-  // Master Operating System View Mode: Executive Directive Overview vs Full Investigation Console
-  const [activeView, setActiveView] = useState<'overview' | 'console'>('overview');
-  const [activeNavTab, setActiveNavTab] = useState<string>('console');
+  // Selection & Focus
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>('ent-vicky');
+  const [selectedRelationship, setSelectedRelationship] = useState<Relationship | null>(null);
+  const [focusEntityId, setFocusEntityId] = useState<string | null>('ent-vicky');
 
-  // Master Syndicate Data state
-  const [nodes, setNodes] = useState<SyndicateNode[]>(INITIAL_SYNDICATE_NODES);
-  const [edges, setEdges] = useState<SyndicateEdge[]>(INITIAL_SYNDICATE_EDGES);
-
-  // Active operation
-  const [selectedOperation, setSelectedOperation] = useState(
-    'Operation Syndicate-Viper // FIR #382/2026 (PS Lanka, Varanasi)'
-  );
-
-  // Selected Target Node for Inspection
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>('node-vicky'); // Default to Vicky Kashi
-
-  // Topology View (2D Force or 3D Hive)
-  const [topologyMode, setTopologyMode] = useState<'2D-FORCE' | '3D-HIVE'>('2D-FORCE');
-
-  // Left Dock & Tabs
-  const [leftDockTab, setLeftDockTab] = useState<'filters' | 'ingestion'>('filters');
-
-  // Inspector Collapsed State
+  // Modals & Drawers
+  const [isNewInvestigationOpen, setIsNewInvestigationOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
   const [isInspectorCollapsed, setIsInspectorCollapsed] = useState(false);
 
-  // Modals state
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  const [isDossierModalOpen, setIsDossierModalOpen] = useState(false);
-
-  // Filter States
-  const [selectedRoles, setSelectedRoles] = useState<Set<EntityRole>>(
-    new Set<EntityRole>(['kingpin', 'mule', 'telecom', 'shell', 'enforcer', 'victim'])
+  // Network Filtering State
+  const [selectedTypes, setSelectedTypes] = useState<Set<EntityType>>(
+    new Set<EntityType>(['person', 'phone', 'account', 'organization', 'location', 'vehicle'])
+  );
+  const [selectedRelTypes, setSelectedRelTypes] = useState<Set<RelationshipType>>(
+    new Set<RelationshipType>(['communication', 'financial', 'association', 'location', 'ownership'])
   );
   const [betweennessThreshold, setBetweennessThreshold] = useState<number>(0.0);
   const [confidenceThreshold, setConfidenceThreshold] = useState<number>(0.5);
-  const [isKingpinIsolated, setIsKingpinIsolated] = useState<boolean>(false);
+  const [showCommunities, setShowCommunities] = useState<boolean>(true);
 
-  // Shortest Path state
+  // Shortest Path State
   const [shortestPathResult, setShortestPathResult] = useState<{
     pathNodeIds: string[];
     totalAmount: number;
     hopCount: number;
   } | null>(null);
 
-  // Louvain Community & Anomaly Radar States
-  const [showLouvainCommunities, setShowLouvainCommunities] = useState<boolean>(true);
-  const [activeAnomaly, setActiveAnomaly] = useState<AnomalyType>(null);
-  const [selectedEdgeForEvidence, setSelectedEdgeForEvidence] = useState<SyndicateEdge | null>(null);
+  // Pattern Highlight State
+  const [highlightedPatternEntityIds, setHighlightedPatternEntityIds] = useState<string[] | null>(null);
 
-  // NLP Entity Sync with Canvas state
-  const [nlpHighlightedNodeIds, setNlpHighlightedNodeIds] = useState<Set<string> | null>(null);
-  const [canvasFocusNodeId, setCanvasFocusNodeId] = useState<string | null>(null);
-
-  const handleSyncNlpEntities = useCallback((nodeIds: string[], focusId: string) => {
-    setNlpHighlightedNodeIds(new Set(nodeIds));
-    setSelectedNodeId(focusId);
-    setCanvasFocusNodeId(focusId);
-  }, []);
-
-  // Timeline DVR state
+  // Timeline Evolution State
   const allDates = useMemo(() => {
-    const datesSet = new Set<string>();
-    INITIAL_SYNDICATE_NODES.forEach(n => datesSet.add(n.firstActivityDate));
-    INITIAL_SYNDICATE_EDGES.forEach(e => datesSet.add(e.timestamp));
-    return Array.from(datesSet).sort();
+    const dates = new Set<string>();
+    INITIAL_ENTITIES.forEach(e => dates.add(e.firstSeen));
+    INITIAL_RELATIONSHIPS.forEach(r => dates.add(r.timestamp));
+    return Array.from(dates).sort();
   }, []);
 
   const [currentDateIndex, setCurrentDateIndex] = useState<number>(allDates.length - 1);
-  const [isPlayingDVR, setIsPlayingDVR] = useState<boolean>(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+  const [isPlayingTimeline, setIsPlayingTimeline] = useState<boolean>(false);
+  const activeDate = allDates[currentDateIndex] || '2026-09-15';
 
-  const currentDate = allDates[currentDateIndex] || '2026-09-15';
-
-  // Toggle Role Filter
-  const handleToggleRole = (role: EntityRole) => {
-    setSelectedRoles(prev => {
+  // Toggle Filters
+  const handleToggleType = (type: EntityType) => {
+    setSelectedTypes(prev => {
       const next = new Set(prev);
-      if (next.has(role)) {
-        next.delete(role);
-      } else {
-        next.add(role);
-      }
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
       return next;
     });
   };
 
-  // Shortest Money Path (BFS / Dijkstra)
+  const handleToggleRelType = (type: RelationshipType) => {
+    setSelectedRelTypes(prev => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+  };
+
+  // Filtered Entities & Relationships based on active filters and timeline date
+  const filteredEntities = useMemo(() => {
+    return entities.filter(ent => {
+      if (!selectedTypes.has(ent.type)) return false;
+      if (ent.metrics.betweenness < betweennessThreshold) return false;
+      if (ent.firstSeen > activeDate) return false;
+      return true;
+    });
+  }, [entities, selectedTypes, betweennessThreshold, activeDate]);
+
+  const filteredEntityIds = useMemo(() => new Set(filteredEntities.map(e => e.id)), [filteredEntities]);
+
+  const filteredRelationships = useMemo(() => {
+    return relationships.filter(rel => {
+      if (!filteredEntityIds.has(rel.sourceId) || !filteredEntityIds.has(rel.targetId)) return false;
+      if (!selectedRelTypes.has(rel.type)) return false;
+      if (rel.confidence < confidenceThreshold) return false;
+      if (rel.timestamp > activeDate) return false;
+      return true;
+    });
+  }, [relationships, filteredEntityIds, selectedRelTypes, confidenceThreshold, activeDate]);
+
+  const selectedEntity = useMemo(() => {
+    return entities.find(e => e.id === selectedEntityId) || null;
+  }, [entities, selectedEntityId]);
+
+  // Shortest Path Solver (BFS)
   const handleCalculateShortestPath = (sourceId: string, targetId: string) => {
-    const adj = new Map<string, Array<{ to: string; edge: SyndicateEdge }>>();
-    edges.forEach(e => {
-      if (!adj.has(e.source)) adj.set(e.source, []);
-      if (!adj.has(e.target)) adj.set(e.target, []);
-      adj.get(e.source)!.push({ to: e.target, edge: e });
-      adj.get(e.target)!.push({ to: e.source, edge: e });
+    const adj = new Map<string, Array<{ to: string; rel: Relationship }>>();
+    relationships.forEach(r => {
+      if (!adj.has(r.sourceId)) adj.set(r.sourceId, []);
+      if (!adj.has(r.targetId)) adj.set(r.targetId, []);
+      adj.get(r.sourceId)!.push({ to: r.targetId, rel: r });
+      adj.get(r.targetId)!.push({ to: r.sourceId, rel: r });
     });
 
-    const queue: Array<{ current: string; path: string[]; edgesInPath: SyndicateEdge[] }> = [
-      { current: sourceId, path: [sourceId], edgesInPath: [] }
+    const queue: Array<{ current: string; path: string[]; relsInPath: Relationship[] }> = [
+      { current: sourceId, path: [sourceId], relsInPath: [] }
     ];
     const visited = new Set<string>([sourceId]);
     let foundPath: string[] | null = null;
-    let foundEdges: SyndicateEdge[] = [];
+    let foundRels: Relationship[] = [];
 
     while (queue.length > 0) {
-      const { current, path, edgesInPath } = queue.shift()!;
+      const { current, path, relsInPath } = queue.shift()!;
       if (current === targetId) {
         foundPath = path;
-        foundEdges = edgesInPath;
+        foundRels = relsInPath;
         break;
       }
 
       const neighbors = adj.get(current) || [];
-      for (const { to, edge } of neighbors) {
+      for (const { to, rel } of neighbors) {
         if (!visited.has(to)) {
           visited.add(to);
           queue.push({
             current: to,
             path: [...path, to],
-            edgesInPath: [...edgesInPath, edge]
+            relsInPath: [...relsInPath, rel]
           });
         }
       }
     }
 
     if (foundPath) {
-      const totalAmount = foundEdges.reduce((sum, e) => sum + (e.amount || 0), 0) || 4250000;
+      const totalAmount = foundRels.reduce((sum, r) => sum + (r.metadata?.amount || 0), 0) || 1850000;
       setShortestPathResult({
         pathNodeIds: foundPath,
         totalAmount,
         hopCount: Math.max(0, foundPath.length - 2),
       });
-    } else {
-      setShortestPathResult({
-        pathNodeIds: [sourceId, targetId],
-        totalAmount: 1450000,
-        hopCount: 1,
-      });
+      setHighlightedPatternEntityIds(null);
     }
   };
 
-  // Trace Hawala flow to Dubai desk from any node
-  const handleTraceHawala = (nodeId: string) => {
-    handleCalculateShortestPath('node-tariq', nodeId);
-  };
+  // Entity Resolution: Merge Candidate Entity into Primary Entity
+  const handleLinkEntities = (matchId: string, primaryId: string, candidateId: string) => {
+    setEntities(prev => {
+      const primary = prev.find(e => e.id === primaryId);
+      const candidate = prev.find(e => e.id === candidateId);
+      if (!primary || !candidate) return prev;
 
-  // Toggle Prime Accused
-  const handleMarkPrimeAccused = (nodeId: string) => {
-    setNodes(prev => prev.map(n => n.id === nodeId ? { ...n, isPrimeAccused: !n.isPrimeAccused } : n));
-  };
+      // Merge aliases and sources
+      const mergedAliases = Array.from(new Set([...primary.aliases, candidate.name, ...candidate.aliases]));
+      const mergedSources = Array.from(new Set([...primary.sourceIds, ...candidate.sourceIds]));
 
-  // Toggle LOC Flag
-  const handleToggleLOC = (nodeId: string) => {
-    setNodes(prev => prev.map(n => n.id === nodeId ? { ...n, flaggedForLoc: !n.flaggedForLoc } : n));
-  };
+      const updatedPrimary: Entity = {
+        ...primary,
+        aliases: mergedAliases,
+        sourceIds: mergedSources,
+        confidence: Math.max(primary.confidence, candidate.confidence),
+      };
 
-  // Inject Extracted Entity from Ingestion Tab
-  const handleInjectExtractedEntity = (ent: ExtractedEntity) => {
-    const newId = `injected-${Date.now()}`;
-    const mappedRole: EntityRole = 
-      ent.type === 'PERSON' ? 'enforcer' :
-      ent.type === 'BANK' ? 'mule' :
-      ent.type === 'SIM' ? 'telecom' :
-      ent.type === 'COMPANY' ? 'shell' : 'victim';
-
-    const newNode: SyndicateNode = {
-      id: newId,
-      name: ent.value,
-      aliases: [ent.type + '-EXTRACTED'],
-      role: mappedRole,
-      cluster: 'C',
-      clusterName: 'Interrogation Ingested Leads',
-      subType: ent.type === 'BANK' ? 'bank' : ent.type === 'SIM' ? 'sim' : ent.type === 'COMPANY' ? 'shell' : 'person',
-      rank: 'Interrogation Corroborated Entity',
-      status: 'UNDER_SURVEILLANCE',
-      riskScore: 75,
-      betweennessCentrality: 0.45,
-      pageRank: 0.08,
-      inDegree: 1,
-      outDegree: 1,
-      flaggedForLoc: false,
-      isPrimeAccused: false,
-      avatarSeed: ent.value,
-      firstActivityDate: currentDate,
-      lastActivityDate: currentDate,
-      telecom: {
-        primaryImei: 'IMEI-PENDING-CAF',
-        imsi: 'IMSI-PENDING',
-        carrier: 'Airtel/Jio UP East',
-        activeTowerId: 'UP-EAST-VNS-71',
-        towerLocation: 'Varanasi Central',
-        linkedMsisdns: [ent.value],
-        cdrInterceptCount: 12,
-        lastInterceptTimestamp: '2026-09-15 11:00:00 IST'
-      },
-      financial: {
-        accountNumber: 'PENDING-KYC',
-        bankName: 'Axis/SBI Field Branch',
-        ifsc: 'SBIN0001248',
-        accountHolder: ent.value,
-        layeringRole: 'Newly Ingested Lead',
-        totalInflow: 500000,
-        totalOutflow: 480000
-      },
-      evidence: {
-        firReference: 'FIR #382/2026 (PS Lanka)',
-        evidenceTag: `EVID-NLP-${Date.now().toString().slice(-4)}`,
-        wiretapLogId: 'WT-LOG-NLP-NEW',
-        towerDumpMatch: true,
-        bnsSections: ['Sec 61(2) BNS'],
-        ipcEquivalent: ['IPC 120B'],
-        confidenceScore: ent.confidence * 100,
-        confessionExcerpt: `Entity extracted via NLP NER from interrogation diary: "${ent.context}"`
-      }
-    };
-
-    setNodes(prev => [...prev, newNode]);
-
-    const targetLink = nodes.find(n => n.role === 'kingpin') || nodes[0];
-    const newEdge: SyndicateEdge = {
-      id: `edge-injected-${Date.now()}`,
-      source: targetLink.id,
-      target: newId,
-      type: mappedRole === 'mule' ? 'financial' : mappedRole === 'telecom' ? 'telecom' : 'conspiracy',
-      label: 'NLP Interrogation Lead Link',
-      timestamp: currentDate,
-      confidence: ent.confidence,
-    };
-
-    setEdges(prev => [...prev, newEdge]);
-    setSelectedNodeId(newId);
-  };
-
-  // Filtered Nodes & Edges based on Role, Thresholds, and Timeline DVR date
-  const filteredNodes = useMemo(() => {
-    return nodes.filter(n => {
-      if (!selectedRoles.has(n.role)) return false;
-      if (n.betweennessCentrality < betweennessThreshold) return false;
-      if (n.firstActivityDate > currentDate) return false;
-      return true;
+      // Remove candidate, keep updated primary
+      return prev.map(e => (e.id === primaryId ? updatedPrimary : e)).filter(e => e.id !== candidateId);
     });
-  }, [nodes, selectedRoles, betweennessThreshold, currentDate]);
 
-  const filteredNodeIds = useMemo(() => new Set(filteredNodes.map(n => n.id)), [filteredNodes]);
-
-  const filteredEdges = useMemo(() => {
-    return edges.filter(e => {
-      if (!filteredNodeIds.has(e.source) || !filteredNodeIds.has(e.target)) return false;
-      if (e.confidence < confidenceThreshold) return false;
-      if (e.timestamp > currentDate) return false;
-      return true;
+    // Re-route relationships
+    setRelationships(prev => {
+      return prev.map(r => {
+        let newSource = r.sourceId === candidateId ? primaryId : r.sourceId;
+        let newTarget = r.targetId === candidateId ? primaryId : r.targetId;
+        return { ...r, sourceId: newSource, targetId: newTarget };
+      }).filter(r => r.sourceId !== r.targetId); // Remove self-loops
     });
-  }, [edges, filteredNodeIds, confidenceThreshold, currentDate]);
 
-  // Selected Node Object
-  const selectedNode = useMemo(() => {
-    return nodes.find(n => n.id === selectedNodeId) || null;
-  }, [nodes, selectedNodeId]);
+    // Mark match as linked
+    setMatches(prev => prev.map(m => m.id === matchId ? { ...m, status: 'linked' } : m));
+  };
 
-  // Network Density & Risk calculation
-  const networkStats = useMemo(() => {
-    const N = filteredNodes.length;
-    const E = filteredEdges.length;
-    const maxEdges = N > 1 ? (N * (N - 1)) / 2 : 1;
-    const density = Math.min(1.0, E / maxEdges);
-    return {
-      density,
-      riskScore: 92,
-      activeNodes: N,
-      activeEdges: E,
-    };
-  }, [filteredNodes, filteredEdges]);
+  const handleIgnoreMatch = (matchId: string) => {
+    setMatches(prev => prev.map(m => m.id === matchId ? { ...m, status: 'ignored' } : m));
+  };
 
-  // -------------------------------------------------------------
-  // VIEW 1: DIRECTIVE OVERVIEW & INTERACTIVE SHOWCASE
-  // -------------------------------------------------------------
-  if (activeView === 'overview') {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#050711] text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-blue-100 dark:selection:bg-cyan-950 selection:text-blue-900 dark:selection:text-cyan-200 transition-colors duration-100 ease-linear">
-        {/* Navigation Bar */}
-        <GovTechNavbar
-          activeTab={activeNavTab}
-          onSelectTab={(tab) => {
-            setActiveNavTab(tab);
-            if (tab === 'console') setActiveView('console');
-          }}
-          onOpenConsole={() => setActiveView('console')}
-          onOpenDossier={() => setIsDossierModalOpen(true)}
-          themeMode={themeMode}
-          onToggleTheme={setThemeMode}
-        />
+  // Switch to Network & Focus on specific entity
+  const handleFocusEntityInNetwork = (entityId: string) => {
+    setActiveTab('network');
+    setSelectedEntityId(entityId);
+    setFocusEntityId(entityId);
+    setIsInspectorCollapsed(false);
+  };
 
-        <main className="flex-1">
-          {/* 1. Hero Directive */}
-          <HeroDirective
-            onLaunchConsole={() => setActiveView('console')}
-            onViewCaseFile={() => setIsDossierModalOpen(true)}
-          />
+  // Switch to Network & Highlight Pattern Entities
+  const handleViewPatternInNetwork = (entityIds: string[]) => {
+    setActiveTab('network');
+    setHighlightedPatternEntityIds(entityIds);
+    setShortestPathResult(null);
+    if (entityIds.length > 0) {
+      setSelectedEntityId(entityIds[0]);
+      setFocusEntityId(entityIds[0]);
+    }
+  };
 
-          {/* 2. 4-Column Proof Metrics Strip */}
-          <ProofMetricsStrip />
-
-          {/* 3. Dual-Column Interactive Intelligence Showcase */}
-          <InteractiveShowcase
-            onLaunchFullConsole={() => setActiveView('console')}
-          />
-
-          {/* 4. Asymmetric 2x2 Capabilities Grid */}
-          <CapabilitiesGrid
-            onExploreCapability={(id) => {
-              if (id === 'kingpin') setIsKingpinIsolated(true);
-              setActiveView('console');
-            }}
-          />
-
-          {/* 5. Realistic Stakeholder Operational Quotes */}
-          <StakeholderQuotes />
-        </main>
-
-        {/* 6. GovTech Standard Footer */}
-        <GovTechFooter
-          onOpenConsole={() => setActiveView('console')}
-          onOpenDossier={() => setIsDossierModalOpen(true)}
-        />
-
-        {/* Modals available globally */}
-        <DossierModal
-          isOpen={isDossierModalOpen}
-          onClose={() => setIsDossierModalOpen(false)}
-          nodes={nodes}
-          edges={edges}
-          operationName={selectedOperation}
-        />
-      </div>
-    );
-  }
-
-  // -------------------------------------------------------------
-  // VIEW 2: FULL-SCREEN INVESTIGATION CONSOLE
-  // -------------------------------------------------------------
   return (
-    <main className="h-screen w-screen overflow-hidden flex flex-col bg-[#F8FAFC] dark:bg-[#050711] text-slate-900 dark:text-slate-100 select-none transition-colors duration-100 ease-linear">
-      {/* 1. TOP COMMAND BAR (Height: 56px / h-14) */}
-      <TopCommandBar
-        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-        onOpenIngestDrawer={() => setLeftDockTab('ingestion')}
-        onOpenExportDossier={() => setIsDossierModalOpen(true)}
-        topologyMode={topologyMode}
-        onToggleTopology={() => setTopologyMode(prev => prev === '2D-FORCE' ? '3D-HIVE' : '2D-FORCE')}
-        selectedOperation={selectedOperation}
-        onSelectOperation={setSelectedOperation}
-        onBackToOverview={() => setActiveView('overview')}
-        networkStats={networkStats}
-        themeMode={themeMode}
-        onToggleTheme={setThemeMode}
+    <main className="h-screen w-screen overflow-hidden flex flex-col bg-[#F8FAFC] text-slate-900 font-sans select-none">
+      {/* 1. Unified Navigation Header */}
+      <NavigationHeader
+        activeTab={activeTab}
+        onSelectTab={(tab) => {
+          if (tab === 'investigations') {
+            setIsNewInvestigationOpen(true);
+          } else if (tab === 'copilot') {
+            setIsCopilotOpen(true);
+          } else {
+            setActiveTab(tab);
+          }
+        }}
+        caseNumber={DEMO_CASE.caseNumber}
+        entitiesCount={entities.length}
+        relationshipsCount={relationships.length}
+        patternsCount={patterns.length}
+        onOpenNewInvestigation={() => setIsNewInvestigationOpen(true)}
+        onOpenExportReport={() => setIsReportModalOpen(true)}
+        onOpenSearch={() => setIsSearchOpen(true)}
       />
 
-      {/* 2. MAIN WORKSPACE ROW (Left Dock 320px | Canvas Flex min-w-0 | Right Inspector 380px) */}
-      <div className="flex-1 w-full flex overflow-hidden">
-        {/* LEFT DOCK - FILTERS & MULTI-MODAL INGESTION */}
-        <LeftDock
-          nodes={nodes}
-          edges={edges}
-          selectedRoles={selectedRoles}
-          onToggleRole={handleToggleRole}
-          betweennessThreshold={betweennessThreshold}
-          onChangeBetweenness={setBetweennessThreshold}
-          confidenceThreshold={confidenceThreshold}
-          onChangeConfidence={setConfidenceThreshold}
-          isKingpinIsolated={isKingpinIsolated}
-          onToggleIsolateKingpin={() => setIsKingpinIsolated(!isKingpinIsolated)}
-          onCalculateShortestPath={handleCalculateShortestPath}
-          shortestPathResult={shortestPathResult}
-          onResetShortestPath={() => setShortestPathResult(null)}
-          onInjectExtractedEntity={handleInjectExtractedEntity}
-          activeTab={leftDockTab}
-          onChangeTab={setLeftDockTab}
-          showLouvainCommunities={showLouvainCommunities}
-          onToggleLouvainCommunities={() => setShowLouvainCommunities(prev => !prev)}
-          onSyncNlpEntities={handleSyncNlpEntities}
-        />
-
-        {/* CENTRAL WORKSPACE - 2D FORCE / HIVE CANVAS & DVR TIMELINE SCRUBBER */}
-        <div className="flex-1 min-w-0 h-full relative flex flex-col overflow-hidden bg-[#F8FAFC] dark:bg-[#050711]">
-          {/* Canvas Engine */}
-          <div className="flex-1 w-full h-full relative">
-            <GraphCanvas
-              nodes={filteredNodes}
-              edges={filteredEdges}
-              selectedNodeId={selectedNodeId}
-              onSelectNode={(node) => setSelectedNodeId(node.id)}
-              topologyMode={topologyMode}
-              isKingpinIsolated={isKingpinIsolated}
-              highlightedPathNodeIds={shortestPathResult?.pathNodeIds || null}
-              showLouvainCommunities={showLouvainCommunities}
-              activeAnomaly={activeAnomaly}
-              onSelectEdge={(edge) => setSelectedEdgeForEvidence(edge)}
-              nlpHighlightedNodeIds={nlpHighlightedNodeIds}
-              focusNodeId={canvasFocusNodeId}
-              themeMode={themeMode}
-            />
-
-            {/* Innovation 1: Automated Pattern & Anomaly Radar (PS 13 Core Requirement) */}
-            <AnomalyRadar
-              activeAnomaly={activeAnomaly}
-              onSelectAnomaly={setActiveAnomaly}
-            />
-
-            {/* DVR Chronological Timeline Scrubber Overlay */}
-            <TimelineScrubber
-              currentDateIndex={currentDateIndex}
-              dates={allDates}
-              isPlaying={isPlayingDVR}
-              onTogglePlay={() => setIsPlayingDVR(!isPlayingDVR)}
-              playbackSpeed={playbackSpeed}
-              onChangeSpeed={setPlaybackSpeed}
-              onScrubDate={setCurrentDateIndex}
-              onReset={() => setCurrentDateIndex(0)}
-              activeEntityCount={filteredNodes.length}
-              activeEdgeCount={filteredEdges.length}
+      {/* 2. Main Tabbed Workspaces */}
+      <div className="flex-1 min-h-0 w-full flex overflow-hidden relative">
+        {/* VIEW A: OVERVIEW / LANDING */}
+        {activeTab === 'overview' && (
+          <div className="flex-1 overflow-y-auto">
+            <LandingHero
+              onStartInvestigation={() => setIsNewInvestigationOpen(true)}
+              onExploreDemo={() => {
+                setActiveTab('network');
+                setFocusEntityId('ent-vicky');
+              }}
             />
           </div>
-        </div>
+        )}
 
-        {/* RIGHT INSPECTOR - SUSPECT DOSSIER & EVIDENCE AUDIT */}
-        <RightInspector
-          node={selectedNode}
-          isCollapsed={isInspectorCollapsed}
-          onToggleCollapse={() => setIsInspectorCollapsed(!isInspectorCollapsed)}
-          onMarkPrimeAccused={handleMarkPrimeAccused}
-          onToggleLOC={handleToggleLOC}
-          onTraceHawala={handleTraceHawala}
+        {/* VIEW B: NETWORK GRAPH (The Core Workspace) */}
+        {activeTab === 'network' && (
+          <div className="flex-1 w-full h-full flex overflow-hidden">
+            {/* Left Column: Filters & Path Drawer */}
+            <NetworkFiltersDrawer
+              entities={entities}
+              selectedTypes={selectedTypes}
+              onToggleType={handleToggleType}
+              selectedRelTypes={selectedRelTypes}
+              onToggleRelType={handleToggleRelType}
+              betweennessThreshold={betweennessThreshold}
+              onChangeBetweenness={setBetweennessThreshold}
+              confidenceThreshold={confidenceThreshold}
+              onChangeConfidence={setConfidenceThreshold}
+              showCommunities={showCommunities}
+              onToggleCommunities={() => setShowCommunities(!showCommunities)}
+              onCalculateShortestPath={handleCalculateShortestPath}
+              shortestPathResult={shortestPathResult}
+              onResetShortestPath={() => setShortestPathResult(null)}
+              isCollapsed={isFiltersCollapsed}
+              onToggleCollapse={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
+            />
+
+            {/* Central Canvas */}
+            <div className="flex-1 min-w-0 h-full relative">
+              <GraphCanvas
+                entities={filteredEntities}
+                relationships={filteredRelationships}
+                selectedEntityId={selectedEntityId}
+                onSelectEntity={(ent) => {
+                  setSelectedEntityId(ent.id);
+                  setIsInspectorCollapsed(false);
+                }}
+                highlightedPathNodeIds={shortestPathResult?.pathNodeIds || null}
+                highlightedPatternEntityIds={highlightedPatternEntityIds}
+                showCommunities={showCommunities}
+                onSelectRelationship={(rel) => setSelectedRelationship(rel)}
+                focusEntityId={focusEntityId}
+              />
+            </div>
+
+            {/* Right Column: Entity Inspector */}
+            <EntityInspector
+              entity={selectedEntity}
+              evidenceCatalog={evidenceCatalog}
+              relationships={relationships}
+              isCollapsed={isInspectorCollapsed}
+              onToggleCollapse={() => setIsInspectorCollapsed(!isInspectorCollapsed)}
+              onTracePathToEntity={(targetId) => handleCalculateShortestPath('ent-vicky', targetId)}
+            />
+          </div>
+        )}
+
+        {/* VIEW C: EXTRACTED ENTITIES & RESOLUTION */}
+        {activeTab === 'entities' && (
+          <EntitiesView
+            entities={entities}
+            evidenceCatalog={evidenceCatalog}
+            matches={matches}
+            onSelectEntity={(ent) => handleFocusEntityInNetwork(ent.id)}
+            onViewInNetwork={handleFocusEntityInNetwork}
+            onLinkEntities={handleLinkEntities}
+            onIgnoreMatch={handleIgnoreMatch}
+          />
+        )}
+
+        {/* VIEW D: EXPLAINABLE PATTERNS */}
+        {activeTab === 'patterns' && (
+          <PatternsView
+            patterns={patterns}
+            entities={entities}
+            evidenceCatalog={evidenceCatalog}
+            onViewPatternInNetwork={handleViewPatternInNetwork}
+          />
+        )}
+
+        {/* VIEW E: EVIDENCE VAULT */}
+        {activeTab === 'evidence' && (
+          <EvidenceView
+            evidenceCatalog={evidenceCatalog}
+            entities={entities}
+            onViewInNetwork={(entIds) => handleViewPatternInNetwork(entIds)}
+          />
+        )}
+
+        {/* VIEW F: NETWORK EVOLUTION TIMELINE */}
+        {activeTab === 'timeline' && (
+          <TimelineEvolutionView
+            dates={allDates}
+            currentDateIndex={currentDateIndex}
+            onScrubDate={setCurrentDateIndex}
+            isPlaying={isPlayingTimeline}
+            onTogglePlay={() => setIsPlayingTimeline(!isPlayingTimeline)}
+            activeEntityCount={filteredEntities.length}
+            activeRelationshipCount={filteredRelationships.length}
+            activePatternCount={patterns.length}
+          />
+        )}
+
+        {/* AI Copilot Side Drawer (Accessible from any screen or dedicated trigger) */}
+        <AICopilotDrawer
+          isOpen={isCopilotOpen}
+          onClose={() => setIsCopilotOpen(false)}
+          entities={entities}
+          relationships={relationships}
+          patterns={patterns}
+          onFocusEntity={handleFocusEntityInNetwork}
         />
       </div>
 
-      {/* Global Command Palette (Ctrl+K) */}
-      <CommandPalette
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-        nodes={nodes}
-        onSelectNode={(node) => {
-          setSelectedNodeId(node.id);
-          setIsInspectorCollapsed(false);
+      {/* Global Modals */}
+      <NewInvestigationModal
+        isOpen={isNewInvestigationOpen}
+        onClose={() => setIsNewInvestigationOpen(false)}
+        onCompleteIngestion={() => {
+          setActiveTab('network');
+          setFocusEntityId('ent-vicky');
         }}
       />
 
-      {/* BNSS Court-Ready Charge-Sheet Dossier Modal */}
-      <DossierModal
-        isOpen={isDossierModalOpen}
-        onClose={() => setIsDossierModalOpen(false)}
-        nodes={nodes}
-        edges={edges}
-        operationName={selectedOperation}
+      <InvestigationReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        investigationCase={DEMO_CASE}
+        entities={entities}
+        relationships={relationships}
+        patterns={patterns}
+        evidenceCatalog={evidenceCatalog}
       />
 
-      {/* Interactive Edge Evidence Popover */}
+      <CommandPalette
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        entities={entities}
+        onSelectEntity={(ent) => handleFocusEntityInNetwork(ent.id)}
+      />
+
       <EdgeEvidencePopover
-        edge={selectedEdgeForEvidence}
-        nodes={nodes}
-        onClose={() => setSelectedEdgeForEvidence(null)}
+        relationship={selectedRelationship}
+        entities={entities}
+        evidenceCatalog={evidenceCatalog}
+        onClose={() => setSelectedRelationship(null)}
       />
     </main>
   );
