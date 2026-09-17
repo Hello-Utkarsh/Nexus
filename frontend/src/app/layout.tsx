@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CHAKRAVYUH-OS // Law Enforcement Intelligence & Syndicate Graph System",
-  description: "AI-Powered Criminal Syndicate Graph & Forensic Analytics Engine for Law Enforcement & Special Task Forces",
+  title: "CHAKRAVYUH // AI-Powered Criminal Network Intelligence",
+  description: "Turn fragmented intelligence into explainable networks of people, communications, money and locations.",
 };
 
 export default function RootLayout({
