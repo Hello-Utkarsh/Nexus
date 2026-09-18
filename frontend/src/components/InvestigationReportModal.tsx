@@ -72,7 +72,7 @@ export const InvestigationReportModal: React.FC<InvestigationReportModalProps> =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 select-none overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="relative w-full max-w-4xl bg-white border border-slate-200 rounded-[3px] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Action Header */}
         <div className="no-print h-14 px-6 border-b border-slate-200 bg-slate-50 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center space-x-2.5">
@@ -85,21 +85,21 @@ export const InvestigationReportModal: React.FC<InvestigationReportModalProps> =
           <div className="flex items-center space-x-2">
             <button
               onClick={handleExportJSON}
-              className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg shadow-2xs transition-colors flex items-center space-x-1.5"
+              className="px-3 py-1.5 text-xs font-mono font-medium text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-[2px] shadow-2xs transition-colors flex items-center space-x-1.5"
             >
               <FileJson className="w-3.5 h-3.5 text-slate-500" />
               <span>Export JSON</span>
             </button>
             <button
               onClick={handlePrint}
-              className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors flex items-center space-x-1.5"
+              className="px-3 py-1.5 text-xs font-mono font-semibold text-white bg-blue-700 hover:bg-blue-600 rounded-[2px] shadow-xs transition-colors flex items-center space-x-1.5 uppercase tracking-wider"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Print Report</span>
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors"
+              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-[2px] transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -131,7 +131,7 @@ export const InvestigationReportModal: React.FC<InvestigationReportModalProps> =
             </div>
 
             {/* Prominent Mandatory AI Disclaimer (Section 31) */}
-            <div className="mt-4 p-3.5 bg-amber-50 border border-amber-200/80 rounded-lg text-xs text-amber-900 flex items-start space-x-2.5">
+            <div className="mt-4 p-3.5 bg-amber-50 border border-amber-200/80 rounded-[2px] text-xs text-amber-900 flex items-start space-x-2.5">
               <ShieldAlert className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
                 <strong>Investigative Notice & Disclaimer:</strong> This document contains AI-generated analytical content synthesized from structured and unstructured data. Verify all findings, relationships, and pattern detections against original source records before operational or legal use.
@@ -144,7 +144,7 @@ export const InvestigationReportModal: React.FC<InvestigationReportModalProps> =
             <h2 className="text-xs font-bold font-mono text-slate-400 uppercase tracking-wider">
               01. CASE SUMMARY & INTELLIGENCE SCOPE
             </h2>
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs leading-relaxed text-slate-700 space-y-2">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-[2px] text-xs leading-relaxed text-slate-700 space-y-2">
               <p>
                 <strong>Subject:</strong> {investigationCase.title}
               </p>
@@ -163,19 +163,19 @@ export const InvestigationReportModal: React.FC<InvestigationReportModalProps> =
               02. KNOWLEDGE GRAPH OVERVIEW
             </h2>
             <div className="grid grid-cols-4 gap-3 text-center">
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-[2px]">
                 <div className="text-xl font-bold font-mono text-slate-900">{entities.length}</div>
                 <div className="text-[11px] text-slate-500 font-medium">Entities</div>
               </div>
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-[2px]">
                 <div className="text-xl font-bold font-mono text-blue-600">{relationships.length}</div>
                 <div className="text-[11px] text-slate-500 font-medium">Relationships</div>
               </div>
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-[2px]">
                 <div className="text-xl font-bold font-mono text-rose-600">{patterns.length}</div>
                 <div className="text-[11px] text-slate-500 font-medium">Detected Patterns</div>
               </div>
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-[2px]">
                 <div className="text-xl font-bold font-mono text-emerald-600">{evidenceCatalog.length}</div>
                 <div className="text-[11px] text-slate-500 font-medium">Source Evidence</div>
               </div>
@@ -187,7 +187,7 @@ export const InvestigationReportModal: React.FC<InvestigationReportModalProps> =
             <h2 className="text-xs font-bold font-mono text-slate-400 uppercase tracking-wider">
               03. KEY STRUCTURAL ENTITIES (HIGHEST BETWEENNESS CENTRALITY)
             </h2>
-            <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <div className="border border-slate-200 rounded-[2px] overflow-hidden">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-mono text-[11px]">
                   <tr>
@@ -220,10 +220,10 @@ export const InvestigationReportModal: React.FC<InvestigationReportModalProps> =
             </h2>
             <div className="space-y-3">
               {patterns.map(p => (
-                <div key={p.id} className="p-4 border border-slate-200 rounded-lg space-y-2">
+                <div key={p.id} className="p-4 border border-slate-200 rounded-[2px] space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-xs text-slate-900">{p.title}</span>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 uppercase">
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-[2px] bg-rose-50 text-rose-700 border border-rose-200 uppercase">
                       {p.confidence}% Confidence
                     </span>
                   </div>

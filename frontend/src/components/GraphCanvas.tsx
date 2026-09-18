@@ -125,8 +125,18 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   // Initialize and synchronize entity positions
   useEffect(() => {
     const currentPositions = positionsRef.current;
-    const width = containerRef.current?.clientWidth || 900;
-    const height = containerRef.current?.clientHeight || 650;
+    let width = 900;
+    let height = 650;
+    if (containerRef.current) {
+      const { width: w, height: h } = containerRef.current.getBoundingClientRect();
+      if (w > 0 && h > 0) {
+        width = w;
+        height = h;
+      } else if (containerRef.current.clientWidth > 0 && containerRef.current.clientHeight > 0) {
+        width = containerRef.current.clientWidth;
+        height = containerRef.current.clientHeight;
+      }
+    }
 
     entities.forEach((ent, idx) => {
       if (!currentPositions.has(ent.id)) {
@@ -177,9 +187,15 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     }));
   };
 
-  const handleFitNetwork = () => {
+  // Dynamic Fit to Screen utilizing getBoundingClientRect
+  const fitToScreen = useCallback(() => {
+    if (!containerRef.current) return;
+    const { width, height } = containerRef.current.getBoundingClientRect();
+    const w = width || containerRef.current.clientWidth || 900;
+    const h = height || containerRef.current.clientHeight || 650;
+
     const positions = Array.from(positionsRef.current.values());
-    if (positions.length === 0 || !containerRef.current) {
+    if (positions.length === 0) {
       setTransform({ x: 0, y: 0, k: 0.95 });
       return;
     }
@@ -192,25 +208,61 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       if (p.y > maxY) maxY = p.y;
     });
 
-    const width = containerRef.current.clientWidth;
-    const height = containerRef.current.clientHeight;
-    const graphWidth = maxX - minX + 80;
-    const graphHeight = maxY - minY + 80;
+    const graphWidth = Math.max(maxX - minX + 80, 100);
+    const graphHeight = Math.max(maxY - minY + 80, 100);
 
-    const scaleX = width / graphWidth;
-    const scaleY = height / graphHeight;
+    const scaleX = w / graphWidth;
+    const scaleY = h / graphHeight;
     const k = Math.min(1.4, Math.max(0.4, Math.min(scaleX, scaleY) * 0.85));
 
     setTransform({
-      x: (width - (minX + maxX) * k) / 2,
-      y: (height - (minY + maxY) * k) / 2,
+      x: (w - (minX + maxX) * k) / 2,
+      y: (h - (minY + maxY) * k) / 2,
       k,
     });
+  }, []);
+
+  const resetView = useCallback(() => {
+    fitToScreen();
+  }, [fitToScreen]);
+
+  const handleFitNetwork = () => {
+    fitToScreen();
   };
 
   const handleReset = () => {
-    setTransform({ x: 0, y: 0, k: 0.95 });
+    resetView();
   };
+
+  // Automated fitToScreen and resetView after initial layout stabilization
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      resetView();
+      fitToScreen();
+    }, 250);
+
+    let resizeTimer: NodeJS.Timeout;
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+              fitToScreen();
+            }, 120);
+          }
+        }
+      });
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(resizeTimer);
+      if (observer) observer.disconnect();
+    };
+  }, [resetView, fitToScreen]);
 
   // Connected nodes helper
   const getConnectedIds = useCallback((entityId: string | null) => {
@@ -235,8 +287,18 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     const render = () => {
       if (!isRunning) return;
 
-      const width = containerRef.current?.clientWidth || 900;
-      const height = containerRef.current?.clientHeight || 650;
+      let width = 900;
+      let height = 650;
+      if (containerRef.current) {
+        const { width: w, height: h } = containerRef.current.getBoundingClientRect();
+        if (w > 0 && h > 0) {
+          width = w;
+          height = h;
+        } else if (containerRef.current.clientWidth > 0 && containerRef.current.clientHeight > 0) {
+          width = containerRef.current.clientWidth;
+          height = containerRef.current.clientHeight;
+        }
+      }
 
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;

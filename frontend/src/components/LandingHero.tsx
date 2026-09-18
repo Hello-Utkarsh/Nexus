@@ -16,6 +16,7 @@ import {
   Layers,
   ChevronRight
 } from 'lucide-react';
+import { WorkflowStepper } from './home/WorkflowStepper';
 
 interface LandingHeroProps {
   onStartInvestigation: () => void;
@@ -26,15 +27,6 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   onStartInvestigation,
   onExploreDemo,
 }) => {
-  const steps = [
-    { num: '01', title: 'INGEST', desc: 'Collect fragmented intelligence from FIRs, CDRs, and banking ledgers.' },
-    { num: '02', title: 'EXTRACT', desc: 'AI identifies important entities across people, phones, accounts, and locations.' },
-    { num: '03', title: 'RESOLVE', desc: 'Connect aliases, misspelled names, and duplicate identities with confidence metrics.' },
-    { num: '04', title: 'CONNECT', desc: 'Build an explainable multi-modal knowledge graph with verifiable links.' },
-    { num: '05', title: 'DETECT', desc: 'Find unusual patterns like circular transactions, midnight bursts, and device churn.' },
-    { num: '06', title: 'INVESTIGATE', desc: 'Explore evidence-backed insights with AI Copilot decision support.' },
-  ];
-
   const capabilities = [
     {
       icon: Database,
@@ -79,110 +71,96 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   ];
 
   return (
-    <div className="w-full flex flex-col bg-[#F8FAFC] text-slate-900 select-none">
-      {/* 1. HERO SECTION */}
-      <section className="pt-20 pb-16 px-4 max-w-5xl mx-auto text-center">
-        {/* Subtle Brand Badge */}
-        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold mb-6 shadow-2xs">
-          <Shield className="w-3.5 h-3.5" />
-          <span>AI-POWERED CRIMINAL NETWORK INTELLIGENCE</span>
-        </div>
+    <div className="w-full flex flex-col bg-slate-950 text-slate-100 select-none pb-16">
+      {/* 1. OPERATIONS BRIEFING & COMMAND CONSOLE */}
+      <section className="w-full max-w-7xl mx-auto px-4 pt-4 pb-2">
+        <div className="bg-slate-900 border border-slate-800 rounded-[3px] p-5 sm:p-6 shadow-xs">
+          {/* Status & Classification Marker Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+            <div className="inline-flex items-center space-x-2 px-2 py-0.5 rounded-[2px] bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-mono font-bold tracking-wider">
+              <Shield className="w-3 h-3 text-slate-400" />
+              <span>AI-POWERED CRIMINAL NETWORK INTELLIGENCE</span>
+            </div>
 
-        {/* Headline (Section 5 & 10) */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-slate-900 leading-[1.12]">
-          Turn fragmented intelligence into explainable networks of people, communications, money and locations.
-        </h1>
+            <div className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+              <span>SECURE OPERATIONS WORKSPACE</span>
+            </div>
+          </div>
 
-        {/* Subtitle */}
-        <p className="mt-6 text-base sm:text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
-          CHAKRAVYUH helps investigators connect structured and unstructured intelligence, discover hidden relationships, identify unusual patterns and trace every analytical finding back to its supporting evidence.
-        </p>
+          {/* Authoritative Operational Headline & Overview */}
+          <div className="mt-4 max-w-4xl">
+            <h1 className="text-xl sm:text-2xl lg:text-[1.75rem] font-semibold tracking-tight text-slate-100 leading-snug font-sans">
+              Turn fragmented intelligence into explainable networks of people, communications, money and locations.
+            </h1>
 
-        {/* Primary Action Buttons */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-          <button
-            onClick={onStartInvestigation}
-            className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center space-x-2"
-          >
-            <span>Start Investigation</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={onExploreDemo}
-            className="w-full sm:w-auto px-6 py-3 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg shadow-xs transition-colors flex items-center justify-center space-x-2"
-          >
-            <Sparkles className="w-4 h-4 text-blue-600" />
-            <span>Explore Demo Investigation</span>
-          </button>
-        </div>
-
-        {/* Dataset Disclaimer Badge */}
-        <div className="mt-8 text-xs text-slate-400 font-mono">
-          Demonstration prototype utilizing sanitized Synthetic Dataset (Case #382/2026).
-        </div>
-      </section>
-
-      {/* 2. PIPELINE: HOW CHAKRAVYUH WORKS (Section 10) */}
-      <section className="py-16 bg-white border-y border-slate-200 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="text-xs font-bold font-mono text-blue-600 uppercase tracking-widest">
-              INVESTIGATION WORKFLOW
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
-              How CHAKRAVYUH Works
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-2 max-w-xl mx-auto">
-              From raw case files to evidence-backed decision support through an explainable AI pipeline.
+            <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed font-sans max-w-3xl">
+              CHAKRAVYUH connects structured and unstructured intelligence to de-anonymize organized crime syndicates with cryptographically verifiable evidence.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {steps.map((st, i) => (
-              <div 
-                key={i}
-                className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl flex flex-col justify-between hover:border-slate-300 transition-colors"
+          {/* Tactical Action Buttons (Solid, Single-Tone, Zero Gradients) */}
+          <div className="mt-5 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <button
+                onClick={onStartInvestigation}
+                className="h-8 px-4 bg-[#1e3a8a] hover:bg-[#1d4ed8] text-white text-xs font-mono font-bold uppercase tracking-wider rounded-[2px] border border-blue-600/40 shadow-xs transition-colors flex items-center justify-center space-x-2"
               >
-                <div>
-                  <span className="text-xs font-bold font-mono text-blue-600">{st.num}</span>
-                  <h3 className="text-xs font-bold text-slate-900 mt-1 mb-1.5 uppercase">{st.title}</h3>
-                  <p className="text-[11px] text-slate-600 leading-relaxed">{st.desc}</p>
-                </div>
-              </div>
-            ))}
+                <span>Start Investigation</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={onExploreDemo}
+                className="h-8 px-4 bg-slate-950 hover:bg-slate-850 text-slate-200 text-xs font-mono font-semibold uppercase tracking-wider rounded-[2px] border border-slate-700 shadow-xs transition-colors flex items-center justify-center space-x-2"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-slate-400" />
+                <span>Explore Demo Investigation</span>
+              </button>
+            </div>
+
+            {/* Dataset Disclaimer Badge */}
+            <div className="text-[10.5px] text-slate-500 font-mono">
+              Demonstration prototype utilizing sanitized Synthetic Dataset (Case #382/2026).
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 3. CORE CAPABILITIES (Section 10) */}
-      <section className="py-16 px-4 max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <span className="text-xs font-bold font-mono text-blue-600 uppercase tracking-widest">
-            ENGINEERED FOR EXPLAINABILITY
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
-            Core Analytical Capabilities
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-2 max-w-xl mx-auto">
+      {/* 2. OPERATIONAL WORKFLOW PIPELINE */}
+      <section className="w-full max-w-7xl mx-auto px-4 my-3">
+        <WorkflowStepper />
+      </section>
+
+      {/* 3. CORE ANALYTICAL CAPABILITIES */}
+      <section className="w-full max-w-7xl mx-auto px-4 my-4">
+        <div className="mb-3 flex items-center justify-between border-b border-slate-800 pb-2">
+          <div>
+            <span className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-wider">
+              ENGINEERED FOR EXPLAINABILITY
+            </span>
+            <h2 className="text-base sm:text-lg font-bold text-slate-100 mt-0.5 font-sans">
+              Core Analytical Capabilities
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 hidden md:block max-w-md text-right font-sans">
             Analytical tools engineered specifically for investigative correlation without black-box conclusions.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
           {capabilities.map((cap, idx) => {
             const Icon = cap.icon;
             return (
               <div
                 key={idx}
-                className="p-5 bg-white border border-slate-200 hover:border-slate-300 rounded-xl shadow-xs transition-all space-y-2.5 flex flex-col justify-between"
+                className="p-3.5 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-[2px] shadow-2xs transition-colors space-y-2 flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-3">
-                    <Icon className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-[2px] bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-400 mb-2">
+                    <Icon className="w-3.5 h-3.5" />
                   </div>
-                  <h3 className="text-sm font-bold text-slate-900">{cap.title}</h3>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{cap.desc}</p>
+                  <h3 className="text-xs font-bold text-slate-200 tracking-tight font-sans">{cap.title}</h3>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed font-sans">{cap.desc}</p>
                 </div>
               </div>
             );
@@ -191,13 +169,13 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
       </section>
 
       {/* 4. CLEAN FOOTER */}
-      <footer className="py-8 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="w-full max-w-7xl mx-auto px-4 pt-6 pb-4 border-t border-slate-800/80 text-xs text-slate-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
-            <span className="font-bold text-slate-800">CHAKRAVYUH</span>
+            <span className="font-bold text-slate-400 font-mono">CHAKRAVYUH</span>
             <span>— Criminal Network Intelligence Platform</span>
           </div>
-          <div className="text-[11px] font-mono text-slate-400">
+          <div className="text-[10.5px] font-mono text-slate-500">
             Prototype demonstration using synthetic intelligence records.
           </div>
         </div>

@@ -2,7 +2,17 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { NavigationHeader, NavigationTab } from '../components/NavigationHeader';
+import { Sidebar } from '../components/layout/Sidebar';
+import { GovAuthModal } from '../components/auth/GovAuthModal';
+import { AuditDock } from '../components/admin/AuditDock';
+import { SocmintView } from '../components/socmint/SocmintView';
+import { InvestigationsView } from '../components/investigations/InvestigationsView';
+import { MyInvestigationsView } from '../components/investigations/MyInvestigationsView';
+import { CaseMetadataBar } from '../components/investigations/CaseMetadataBar';
+import { CaseDossierDoc } from '../components/investigations/CaseDossierDoc';
+import { TimelineView } from '../components/timeline/TimelineView';
 import { LandingHero } from '../components/LandingHero';
+import { NetworkWorkbench } from '../components/network/NetworkWorkbench';
 import { GraphCanvas } from '../components/GraphCanvas';
 import { NetworkFiltersDrawer } from '../components/NetworkFiltersDrawer';
 import { EntityInspector } from '../components/EntityInspector';
@@ -10,12 +20,17 @@ import { EntitiesView } from '../components/EntitiesView';
 import { EntityResolutionView } from '../components/EntityResolutionView';
 import { PatternsView } from '../components/PatternsView';
 import { EvidenceView } from '../components/EvidenceView';
+import { EvidenceVaultView } from '../components/evidence/EvidenceVaultView';
+import { SourceDocumentDrawer } from '../components/evidence/SourceDocumentDrawer';
 import { TimelineEvolutionView } from '../components/TimelineEvolutionView';
 import { AICopilotDrawer } from '../components/AICopilotDrawer';
 import { NewInvestigationModal } from '../components/NewInvestigationModal';
+import { MultiFormatIngestModal } from '../components/ingestion/MultiFormatIngestModal';
 import { InvestigationReportModal } from '../components/InvestigationReportModal';
 import { CommandPalette } from '../components/CommandPalette';
 import { EdgeEvidencePopover } from '../components/EdgeEvidencePopover';
+import { GlobalFloatingPrompt } from '../components/copilot/GlobalFloatingPrompt';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 
 import { 
   INITIAL_ENTITIES, 
@@ -33,9 +48,17 @@ import {
   EntityMatch 
 } from '../types/intelligence';
 
-export default function ChakravyuhPlatform() {
+function ChakravyuhPlatformInner() {
+  const { isAuthenticated, isLoading, isSuperAdmin } = useAuth();
+
   // Navigation
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
+
+  // Sidebar Layout State
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Super Admin Audit Dock State
+  const [isAuditDockOpen, setIsAuditDockOpen] = useState(false);
 
   // Core Dataset State
   const [entities, setEntities] = useState<Entity[]>(INITIAL_ENTITIES);
@@ -52,10 +75,16 @@ export default function ChakravyuhPlatform() {
   // Modals & Drawers
   const [isNewInvestigationOpen, setIsNewInvestigationOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isDossierDocOpen, setIsDossierDocOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
   const [isInspectorCollapsed, setIsInspectorCollapsed] = useState(false);
+  const [selectedSourceTag, setSelectedSourceTag] = useState<string | null>(null);
+
+  // Active Case Directive & Metadata
+  const [activeCaseDirective, setActiveCaseDirective] = useState('OP: Operation Syndicate-Viper // FIR #382/2026');
+  const [activeUnitName, setActiveUnitName] = useState('UP-STF Special Cell (Varanasi / Lucknow Range)');
 
   // Network Filtering State
   const [selectedTypes, setSelectedTypes] = useState<Set<EntityType>>(
@@ -242,50 +271,105 @@ export default function ChakravyuhPlatform() {
     }
   };
 
+  // If loading session state from storage
+  if (isLoading) {
+    return (
+      <div className="h-screen w-screen bg-slate-950 flex flex-col items-center justify-center font-mono text-slate-400 space-y-3">
+        <div className="w-8 h-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+        <div className="text-xs tracking-widest text-slate-300 uppercase">
+          INITIALIZING CHAKRAVYUH SECURE SESSION...
+        </div>
+      </div>
+    );
+  }
+
+  // If unauthenticated guest, render GovAuthModal
+  if (!isAuthenticated) {
+    return <GovAuthModal isOpen={true} />;
+  }
+
   return (
-    <main className="h-screen w-screen overflow-hidden flex flex-col bg-[#F8FAFC] text-slate-900 font-sans select-none">
-      {/* 1. Unified Navigation Header */}
-      <NavigationHeader
-        activeTab={activeTab}
-        onSelectTab={(tab) => {
-          if (tab === 'investigations') {
-            setIsNewInvestigationOpen(true);
-          } else if (tab === 'copilot') {
-            setIsCopilotOpen(true);
-          } else {
-            setActiveTab(tab);
-          }
-        }}
-        caseNumber={DEMO_CASE.caseNumber}
-        entitiesCount={entities.length}
-        relationshipsCount={relationships.length}
-        patternsCount={patterns.length}
-        onOpenNewInvestigation={() => setIsNewInvestigationOpen(true)}
-        onOpenExportReport={() => setIsReportModalOpen(true)}
-        onOpenSearch={() => setIsSearchOpen(true)}
-      />
+    <main className="h-screen w-full flex bg-slate-950 text-slate-900 font-sans select-none">
+      {/* 1. Left-Side Responsive Collapsible GovTech Sidebar (Pinned to Viewport Height) */}
+      <div className="shrink-0 h-full z-40">
+        <Sidebar
+          activeTab={activeTab}
+          onSelectTab={(tab) => {
+            if (tab === 'investigations') {
+              setActiveTab('investigations');
+            } else if (tab === 'copilot') {
+              setIsCopilotOpen(true);
+            } else {
+              setActiveTab(tab);
+            }
+          }}
+          patternsCount={patterns.length}
+          evidenceCount={evidenceCatalog.length}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          onOpenAuditDock={() => setIsAuditDockOpen(true)}
+        />
+      </div>
 
-      {/* 2. Main Tabbed Workspaces */}
-      <div className="flex-1 min-h-0 w-full flex overflow-hidden relative">
-        {/* VIEW A: OVERVIEW / LANDING */}
-        {activeTab === 'overview' && (
-          <div className="flex-1 overflow-y-auto">
-            <LandingHero
-              onStartInvestigation={() => setIsNewInvestigationOpen(true)}
-              onExploreDemo={() => {
-                setActiveTab('network');
-                setFocusEntityId('ent-vicky');
-              }}
-            />
-          </div>
-        )}
+      {/* 2. Main Content Application Shell (Natural 100% Zoom Scrolling) */}
+      <div className="flex-1 h-screen overflow-y-auto overflow-x-hidden min-h-0 flex flex-col bg-[#F8FAFC] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar-thumb]:bg-slate-800 hover:[&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full">
+        {/* Top Sticky Tactical Navigation Bar & Investigation Metadata */}
+        <div className="sticky top-0 z-30 bg-white shrink-0 shadow-xs">
+          <NavigationHeader
+            activeTab={activeTab}
+            onSelectTab={(tab) => {
+              if (tab === 'investigations') {
+                setActiveTab('investigations');
+              } else if (tab === 'copilot') {
+                setIsCopilotOpen(true);
+              } else {
+                setActiveTab(tab);
+              }
+            }}
+            caseNumber={DEMO_CASE.caseNumber}
+            entitiesCount={entities.length}
+            relationshipsCount={relationships.length}
+            patternsCount={patterns.length}
+            onOpenNewInvestigation={() => setIsNewInvestigationOpen(true)}
+            onOpenExportReport={() => setIsReportModalOpen(true)}
+            onOpenSearch={() => setIsSearchOpen(true)}
+            onOpenAuditDock={() => setIsAuditDockOpen(true)}
+            onOpenCopilot={() => setIsCopilotOpen(true)}
+          />
 
-        {/* VIEW B: NETWORK GRAPH (The Core Workspace) */}
-        {activeTab === 'network' && (
-          <div className="flex-1 w-full h-full flex overflow-hidden">
-            {/* Left Column: Filters & Path Drawer */}
-            <NetworkFiltersDrawer
+          <CaseMetadataBar
+            caseDirective={activeCaseDirective}
+            unitName={activeUnitName}
+            onExportExhibit={() => setIsDossierDocOpen(true)}
+          />
+        </div>
+
+        {/* 3. Main Dynamic Workspace Area */}
+        <div className="flex-1 w-full relative">
+          {/* VIEW A: OVERVIEW / LANDING */}
+          {activeTab === 'overview' && (
+            <div className="w-full min-h-full bg-slate-950">
+              <LandingHero
+                onStartInvestigation={() => setIsNewInvestigationOpen(true)}
+                onExploreDemo={() => {
+                  setActiveTab('network');
+                  setFocusEntityId('ent-vicky');
+                }}
+              />
+            </div>
+          )}
+
+          {/* VIEW B: NETWORK WORKBENCH (The Core Graph Workspace) */}
+          {activeTab === 'network' && (
+            <div className="w-full h-[calc(100vh-6.5rem)] min-h-[720px]">
+            <NetworkWorkbench
               entities={entities}
+              relationships={relationships}
+              filteredEntities={filteredEntities}
+              filteredRelationships={filteredRelationships}
+              selectedEntity={selectedEntity}
+              selectedEntityId={selectedEntityId}
+              focusEntityId={focusEntityId}
               selectedTypes={selectedTypes}
               onToggleType={handleToggleType}
               selectedRelTypes={selectedRelTypes}
@@ -296,102 +380,129 @@ export default function ChakravyuhPlatform() {
               onChangeConfidence={setConfidenceThreshold}
               showCommunities={showCommunities}
               onToggleCommunities={() => setShowCommunities(!showCommunities)}
+              onSelectEntity={(ent) => {
+                setSelectedEntityId(ent.id);
+                setFocusEntityId(ent.id);
+              }}
+              onSelectRelationship={(rel) => setSelectedRelationship(rel)}
               onCalculateShortestPath={handleCalculateShortestPath}
               shortestPathResult={shortestPathResult}
               onResetShortestPath={() => setShortestPathResult(null)}
-              isCollapsed={isFiltersCollapsed}
-              onToggleCollapse={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
+              highlightedPatternEntityIds={highlightedPatternEntityIds}
+              onSetHighlightedPatternEntityIds={setHighlightedPatternEntityIds}
+              evidenceCatalog={evidenceCatalog}
+              onSelectSourceTag={(tag) => setSelectedSourceTag(tag)}
             />
+            </div>
+          )}
 
-            {/* Central Canvas */}
-            <div className="flex-1 min-w-0 h-full relative">
-              <GraphCanvas
-                entities={filteredEntities}
-                relationships={filteredRelationships}
-                selectedEntityId={selectedEntityId}
-                onSelectEntity={(ent) => {
-                  setSelectedEntityId(ent.id);
-                  setIsInspectorCollapsed(false);
-                }}
-                highlightedPathNodeIds={shortestPathResult?.pathNodeIds || null}
-                highlightedPatternEntityIds={highlightedPatternEntityIds}
-                showCommunities={showCommunities}
-                onSelectRelationship={(rel) => setSelectedRelationship(rel)}
-                focusEntityId={focusEntityId}
+          {/* VIEW C: PATTERNS RADAR */}
+          {activeTab === 'patterns' && (
+            <div className="w-full h-[calc(100vh-6.5rem)] min-h-[720px]">
+              <PatternsView
+                patterns={patterns}
+                entities={entities}
+                evidenceCatalog={evidenceCatalog}
+                onViewPatternInNetwork={handleViewPatternInNetwork}
               />
             </div>
+          )}
 
-            {/* Right Column: Entity Inspector */}
-            <EntityInspector
-              entity={selectedEntity}
-              evidenceCatalog={evidenceCatalog}
-              relationships={relationships}
-              isCollapsed={isInspectorCollapsed}
-              onToggleCollapse={() => setIsInspectorCollapsed(!isInspectorCollapsed)}
-              onTracePathToEntity={(targetId) => handleCalculateShortestPath('ent-vicky', targetId)}
-            />
-          </div>
-        )}
+          {/* VIEW D: TIMELINE ANALYSIS */}
+          {activeTab === 'timeline' && (
+            <div className="w-full h-[calc(100vh-6.5rem)] min-h-[720px]">
+              <TimelineView
+                currentStageIndex={3}
+                onSelectStage={(stageIndex, date) => {
+                  const matched = allDates.indexOf(date);
+                  if (matched !== -1) {
+                    setCurrentDateIndex(matched);
+                  }
+                }}
+                onLaunchWorkbench={() => {
+                  setActiveTab('network');
+                  setFocusEntityId('ent-vicky');
+                }}
+              />
+            </div>
+          )}
 
-        {/* VIEW C: EXTRACTED ENTITIES & RESOLUTION */}
-        {activeTab === 'entities' && (
-          <EntitiesView
+          {/* VIEW E: MULTIMEDIA EVIDENCE VAULT */}
+          {activeTab === 'evidence' && (
+            <div className="w-full h-[calc(100vh-6.5rem)] min-h-[720px]">
+              <EvidenceVaultView
+                evidenceCatalog={evidenceCatalog}
+                entities={entities}
+                onViewInNetwork={(entIds) => handleViewPatternInNetwork(entIds)}
+                onSelectSourceTag={(tag) => setSelectedSourceTag(tag)}
+              />
+            </div>
+          )}
+
+          {/* VIEW F: SOCMINT & OSINT RADAR */}
+          {activeTab === 'socmint' && (
+            <div className="w-full h-[calc(100vh-6.5rem)] min-h-[720px]">
+              <SocmintView 
+                onViewEntityInNetwork={handleFocusEntityInNetwork}
+                onMapToGraph={(entityIds, focusId) => {
+                  setActiveTab('network');
+                  setHighlightedPatternEntityIds(entityIds);
+                  setShortestPathResult(null);
+                  if (focusId) {
+                    setSelectedEntityId(focusId);
+                    setFocusEntityId(focusId);
+                    setIsInspectorCollapsed(false);
+                  }
+                }}
+              />
+            </div>
+          )}
+
+          {/* VIEW G: MY INVESTIGATIONS CASE MANAGEMENT */}
+          {activeTab === 'investigations' && (
+            <div className="w-full h-[calc(100vh-6.5rem)] min-h-[720px]">
+              <MyInvestigationsView
+                onSelectCase={(caseId) => {
+                  if (caseId === 'case-382') {
+                    setActiveCaseDirective('OP: Operation Syndicate-Viper // FIR #382/2026');
+                    setActiveUnitName('UP-STF Special Cell (Varanasi / Lucknow Range)');
+                  } else if (caseId === 'case-104') {
+                    setActiveCaseDirective('OP: Operation Signal-Ghost // FIR #104/2026');
+                    setActiveUnitName('Cyber Crime PS Lucknow Range');
+                  } else {
+                    setActiveCaseDirective('OP: Operation Silent-Tower // FIR #042/2025');
+                    setActiveUnitName('Varanasi Commissionerate Special Operations');
+                  }
+                  setActiveTab('network');
+                  setFocusEntityId('ent-vicky');
+                }}
+                onOpenNewInvestigation={() => setIsNewInvestigationOpen(true)}
+                onOpenExportReport={() => setIsDossierDocOpen(true)}
+                onOpenDossier={() => setIsDossierDocOpen(true)}
+              />
+            </div>
+          )}
+
+          {/* AI Copilot Side Drawer */}
+          <AICopilotDrawer
+            isOpen={isCopilotOpen}
+            onClose={() => setIsCopilotOpen(false)}
             entities={entities}
-            evidenceCatalog={evidenceCatalog}
-            matches={matches}
-            onSelectEntity={(ent) => handleFocusEntityInNetwork(ent.id)}
-            onViewInNetwork={handleFocusEntityInNetwork}
-            onLinkEntities={handleLinkEntities}
-            onIgnoreMatch={handleIgnoreMatch}
-          />
-        )}
-
-        {/* VIEW D: EXPLAINABLE PATTERNS */}
-        {activeTab === 'patterns' && (
-          <PatternsView
+            relationships={relationships}
             patterns={patterns}
-            entities={entities}
-            evidenceCatalog={evidenceCatalog}
-            onViewPatternInNetwork={handleViewPatternInNetwork}
+            onFocusEntity={handleFocusEntityInNetwork}
           />
-        )}
-
-        {/* VIEW E: EVIDENCE VAULT */}
-        {activeTab === 'evidence' && (
-          <EvidenceView
-            evidenceCatalog={evidenceCatalog}
-            entities={entities}
-            onViewInNetwork={(entIds) => handleViewPatternInNetwork(entIds)}
-          />
-        )}
-
-        {/* VIEW F: NETWORK EVOLUTION TIMELINE */}
-        {activeTab === 'timeline' && (
-          <TimelineEvolutionView
-            dates={allDates}
-            currentDateIndex={currentDateIndex}
-            onScrubDate={setCurrentDateIndex}
-            isPlaying={isPlayingTimeline}
-            onTogglePlay={() => setIsPlayingTimeline(!isPlayingTimeline)}
-            activeEntityCount={filteredEntities.length}
-            activeRelationshipCount={filteredRelationships.length}
-            activePatternCount={patterns.length}
-          />
-        )}
-
-        {/* AI Copilot Side Drawer (Accessible from any screen or dedicated trigger) */}
-        <AICopilotDrawer
-          isOpen={isCopilotOpen}
-          onClose={() => setIsCopilotOpen(false)}
-          entities={entities}
-          relationships={relationships}
-          patterns={patterns}
-          onFocusEntity={handleFocusEntityInNetwork}
-        />
+        </div>
       </div>
 
-      {/* Global Modals */}
-      <NewInvestigationModal
+      {/* Super Admin Audit Dock Drawer */}
+      <AuditDock
+        isOpen={isAuditDockOpen}
+        onClose={() => setIsAuditDockOpen(false)}
+      />
+
+      {/* Multi-Format Ingestion Modal (Phase 4) */}
+      <MultiFormatIngestModal
         isOpen={isNewInvestigationOpen}
         onClose={() => setIsNewInvestigationOpen(false)}
         onCompleteIngestion={() => {
@@ -410,6 +521,20 @@ export default function ChakravyuhPlatform() {
         evidenceCatalog={evidenceCatalog}
       />
 
+      {/* Google Docs-Style Case Diary & Official Report Modal */}
+      <CaseDossierDoc
+        isOpen={isDossierDocOpen}
+        onClose={() => setIsDossierDocOpen(false)}
+        caseNumber={DEMO_CASE.caseNumber}
+      />
+
+      {/* Source Document Evidentiary Drawer (Phase 4) */}
+      <SourceDocumentDrawer
+        sourceTag={selectedSourceTag}
+        onClose={() => setSelectedSourceTag(null)}
+        onNavigateToEntity={handleFocusEntityInNetwork}
+      />
+
       <CommandPalette
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
@@ -423,6 +548,33 @@ export default function ChakravyuhPlatform() {
         evidenceCatalog={evidenceCatalog}
         onClose={() => setSelectedRelationship(null)}
       />
+
+      {/* Global Persistent AI Prompt Dock */}
+      <GlobalFloatingPrompt
+        onHighlightInGraph={(entityIds, focusId) => {
+          setActiveTab('network');
+          setHighlightedPatternEntityIds(entityIds);
+          setShortestPathResult(null);
+          if (focusId) {
+            setSelectedEntityId(focusId);
+            setFocusEntityId(focusId);
+            setIsInspectorCollapsed(false);
+          } else if (entityIds.length > 0) {
+            setSelectedEntityId(entityIds[0]);
+            setFocusEntityId(entityIds[0]);
+            setIsInspectorCollapsed(false);
+          }
+        }}
+        onNavigateTab={(tab) => setActiveTab(tab as any)}
+      />
     </main>
+  );
+}
+
+export default function ChakravyuhPlatform() {
+  return (
+    <AuthProvider>
+      <ChakravyuhPlatformInner />
+    </AuthProvider>
   );
 }
