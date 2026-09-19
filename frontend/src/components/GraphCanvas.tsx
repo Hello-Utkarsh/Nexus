@@ -399,6 +399,45 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       ctx.translate(transform.x, transform.y);
       ctx.scale(transform.k, transform.k);
 
+      // Technical Dot-Grid & Millimeter Coordinate Background
+      const gridSize = 40;
+      const viewLeft = -transform.x / transform.k;
+      const viewTop = -transform.y / transform.k;
+      const viewRight = (width - transform.x) / transform.k;
+      const viewBottom = (height - transform.y) / transform.k;
+
+      const startX = Math.floor(viewLeft / gridSize) * gridSize;
+      const endX = Math.ceil(viewRight / gridSize) * gridSize;
+      const startY = Math.floor(viewTop / gridSize) * gridSize;
+      const endY = Math.ceil(viewBottom / gridSize) * gridSize;
+
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.09)';
+      for (let gx = startX; gx <= endX; gx += gridSize) {
+        for (let gy = startY; gy <= endY; gy += gridSize) {
+          ctx.fillRect(gx - 0.75, gy - 0.75, 1.5, 1.5);
+        }
+      }
+
+      // Coordinate Crosshairs every 200px
+      const majorSize = 200;
+      const majorStartX = Math.floor(viewLeft / majorSize) * majorSize;
+      const majorEndX = Math.ceil(viewRight / majorSize) * majorSize;
+      const majorStartY = Math.floor(viewTop / majorSize) * majorSize;
+      const majorEndY = Math.ceil(viewBottom / majorSize) * majorSize;
+
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
+      ctx.lineWidth = 1;
+      for (let mx = majorStartX; mx <= majorEndX; mx += majorSize) {
+        for (let my = majorStartY; my <= majorEndY; my += majorSize) {
+          ctx.beginPath();
+          ctx.moveTo(mx - 5, my);
+          ctx.lineTo(mx + 5, my);
+          ctx.moveTo(mx, my - 5);
+          ctx.lineTo(mx, my + 5);
+          ctx.stroke();
+        }
+      }
+
       // A. Convex Hull Communities
       if (showCommunities) {
         const communityGroups = new Map<number, Array<{ x: number; y: number }>>();
@@ -427,13 +466,35 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // Community Badge Label
+            // Community Cell Badge Label (Crisp Dark Backing Pill)
             const avgX = pts.reduce((s, p) => s + p.x, 0) / pts.length;
             const minY = Math.min(...pts.map(p => p.y));
 
-            ctx.font = '500 10px Inter, sans-serif';
-            ctx.fillStyle = '#475569';
-            ctx.fillText(style.label.toUpperCase(), avgX - 40, minY - 14);
+            const badgeText = style.label.toUpperCase();
+            ctx.font = '600 9.5px "IBM Plex Mono", monospace';
+            const badgeWidth = ctx.measureText(badgeText).width + 20;
+            const badgeHeight = 18;
+            const badgeX = avgX - badgeWidth / 2;
+            const badgeY = minY - 24;
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+            ctx.strokeStyle = style.stroke;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Status indicator dot
+            ctx.fillStyle = style.stroke;
+            ctx.beginPath();
+            ctx.arc(badgeX + 7.5, badgeY + badgeHeight / 2, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#E2E8F0';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(badgeText, badgeX + 14, badgeY + badgeHeight / 2);
           }
         });
       }
@@ -612,16 +673,23 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           const labelY = pos.y + radius + 4;
           const text = ent.name.length > 22 ? ent.name.slice(0, 20) + '…' : ent.name;
 
-          // Subtle text background pill
+          // Semi-opaque dark backing pill to prevent edge overlap clutter
           const textWidth = ctx.measureText(text).width;
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-          ctx.fillRect(pos.x - textWidth / 2 - 4, labelY - 1, textWidth + 8, 15);
-          ctx.strokeStyle = '#E2E8F0';
-          ctx.lineWidth = 0.8;
-          ctx.strokeRect(pos.x - textWidth / 2 - 4, labelY - 1, textWidth + 8, 15);
+          const pillX = pos.x - textWidth / 2 - 5;
+          const pillY = labelY - 1;
+          const pillW = textWidth + 10;
+          const pillH = 16;
 
-          ctx.fillStyle = '#0F172A';
-          ctx.fillText(text, pos.x, labelY);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+          ctx.strokeStyle = isSelected ? '#3B82F6' : 'rgba(51, 65, 85, 0.85)';
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.roundRect(pillX, pillY, pillW, pillH, 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = isSelected ? '#60A5FA' : '#F8FAFC';
+          ctx.fillText(text, pos.x, labelY + 1);
         }
 
         ctx.restore();

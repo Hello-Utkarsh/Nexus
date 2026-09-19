@@ -59,19 +59,14 @@ export const WorkflowStepper: React.FC = () => {
   ];
 
   return (
-    <div className="w-full p-3.5 rounded-[3px] border border-slate-800 bg-slate-900 font-sans shadow-xs">
+    <div className="w-full p-3.5 rounded-[3px] border border-slate-800/80 bg-slate-900/80 backdrop-blur-xs font-sans shadow-xs">
       {/* Header Bar */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-        <div className="flex items-center space-x-2">
-          <span className="text-[9.5px] font-mono font-bold text-slate-300 uppercase tracking-wider bg-slate-950 px-1.5 py-0.5 rounded-[2px] border border-slate-700">
-            WORKFLOW
-          </span>
-          <h2 className="text-xs font-bold text-slate-200 tracking-tight font-sans">
-            How CHAKRAVYUH De-Anonymizes Organized Crime
-          </h2>
-        </div>
+      <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <h2 className="text-xs sm:text-sm font-bold text-slate-100 tracking-tight font-sans">
+          How CHAKRAVYUH De-Anonymizes Organized Crime
+        </h2>
 
-        <div className="text-[10px] font-mono font-semibold text-slate-400">
+        <div className="text-[10.5px] font-mono text-slate-400">
           SEC 63 BSA // BNS 111
         </div>
       </div>
@@ -84,7 +79,7 @@ export const WorkflowStepper: React.FC = () => {
           return (
             <div
               key={item.step}
-              className="p-3 rounded-[2px] border border-slate-800 bg-slate-950 flex flex-col justify-between min-h-[120px] hover:border-slate-750 transition-colors group shadow-2xs"
+              className="p-3 rounded-[2px] border border-slate-800/80 bg-slate-950/80 backdrop-blur-xs flex flex-col justify-between min-h-[120px] hover:border-slate-700 transition-colors group shadow-2xs"
             >
               <div className="space-y-1.5">
                 {/* Step number and icon */}

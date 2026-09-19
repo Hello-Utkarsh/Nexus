@@ -16,7 +16,9 @@ import {
   ShieldAlert, 
   RefreshCw,
   Copy,
-  Check
+  Check,
+  Cpu,
+  User
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAuditLogs } from '../../lib/api';
@@ -265,6 +267,47 @@ export const AuditDock: React.FC<AuditDockProps> = ({ isOpen, onClose }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const renderOfficerBadge = (officerId: string, officerName: string) => {
+    if (officerId.includes('IPS') || officerName.includes('DIG')) {
+      return (
+        <div 
+          className="w-7 h-7 rounded-full bg-amber-950/80 border border-amber-500/70 text-amber-300 flex items-center justify-center shrink-0 text-[9px] font-bold font-mono shadow-xs ring-1 ring-amber-500/20"
+          title={`${officerName} (${officerId})`}
+        >
+          <span>IPS</span>
+        </div>
+      );
+    }
+    if (officerId.includes('STF') || officerName.includes('Insp')) {
+      return (
+        <div 
+          className="w-7 h-7 rounded-full bg-blue-950/80 border border-blue-500/70 text-blue-300 flex items-center justify-center shrink-0 text-[9px] font-bold font-mono shadow-xs ring-1 ring-blue-500/20"
+          title={`${officerName} (${officerId})`}
+        >
+          <span>STF</span>
+        </div>
+      );
+    }
+    if (officerId.includes('SYS') || officerName.includes('Grid') || officerName.includes('Automated')) {
+      return (
+        <div 
+          className="w-7 h-7 rounded-full bg-emerald-950/80 border border-emerald-500/70 text-emerald-300 flex items-center justify-center shrink-0 shadow-xs ring-1 ring-emerald-500/20"
+          title={`${officerName} (${officerId})`}
+        >
+          <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+        </div>
+      );
+    }
+    return (
+      <div 
+        className="w-7 h-7 rounded-full bg-rose-950/80 border border-rose-500/70 text-rose-300 flex items-center justify-center shrink-0 shadow-xs ring-1 ring-rose-500/20"
+        title={`${officerName} (${officerId})`}
+      >
+        <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+      </div>
+    );
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -427,36 +470,41 @@ export const AuditDock: React.FC<AuditDockProps> = ({ isOpen, onClose }) => {
                         : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
                     }`}
                   >
-                    {/* Header Row */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center space-x-2 min-w-0">
-                        <span
-                          className={`px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 ${
-                            isCritical
-                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                              : isSensitive
-                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                              : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                          }`}
-                        >
-                          {log.severity}
-                        </span>
+                    <div className="flex items-start space-x-3">
+                      {/* Circular Officer / System Profile Badge Icon */}
+                      {renderOfficerBadge(log.officerId, log.officerName)}
 
-                        <span className="font-bold text-white tracking-wide truncate">
-                          {log.action}
-                        </span>
-                      </div>
+                      <div className="flex-1 min-w-0">
+                        {/* Header Row */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center space-x-2 min-w-0">
+                            <span
+                              className={`px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                                isCritical
+                                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                  : isSensitive
+                                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                  : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                              }`}
+                            >
+                              {log.severity}
+                            </span>
 
-                      <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold shrink-0 ${
-                          log.status.startsWith('200')
-                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/80'
-                            : 'bg-rose-950 text-rose-400 border border-rose-800/80'
-                        }`}
-                      >
-                        {log.status}
-                      </span>
-                    </div>
+                            <span className="font-bold text-white tracking-wide truncate">
+                              {log.action}
+                            </span>
+                          </div>
+
+                          <span
+                            className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold shrink-0 ${
+                              log.status.startsWith('200')
+                                ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/80'
+                                : 'bg-rose-950 text-rose-400 border border-rose-800/80'
+                            }`}
+                          >
+                            {log.status}
+                          </span>
+                        </div>
 
                     {/* Metadata Sub-row */}
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
@@ -486,6 +534,8 @@ export const AuditDock: React.FC<AuditDockProps> = ({ isOpen, onClose }) => {
                         {log.details}
                       </div>
                     )}
+                      </div>
+                    </div>
                   </div>
                 );
               })

@@ -24,6 +24,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { fetchIntelligenceLogs } from '../../lib/api';
+import { IndiaMapBackdrop } from '../dashboard/IndiaMapBackdrop';
 
 interface SocmintViewProps {
   onViewEntityInNetwork?: (entityId: string) => void;
@@ -32,7 +33,7 @@ interface SocmintViewProps {
 
 export interface SocmintFeedItem {
   id: string;
-  platform: 'Telegram Channel' | 'X Burner Handle' | 'Encrypted Chat Intercept' | 'Darknet Onion Relay';
+  platform: 'Telegram Channel' | 'X Burner Handle' | 'Encrypted Chat Intercept' | 'Darknet Onion Relay' | 'WhatsApp Forensic Extraction';
   channelName: string;
   handle: string;
   timestamp: string;
@@ -44,9 +45,28 @@ export interface SocmintFeedItem {
   riskScore: number;
   flaggedKeywords: string[];
   entityIdsToMap: string[];
+  chainOfCustody?: string;
+  hashStamp?: string;
 }
 
 export const SOCMINT_FEED_ITEMS: SocmintFeedItem[] = [
+  {
+    id: 'soc-00',
+    platform: 'WhatsApp Forensic Extraction',
+    channelName: 'WHATSAPP BUSINESS VAULT (UFED EXTRACTION)',
+    handle: '+91-94520-11209 // Extracted via Cellebrite UFED Dump',
+    timestamp: '8 mins ago (18:40 IST)',
+    rawExcerpt: 'Bhejo token #TK-889 to Dubai clearing desk. Cash handover at Godowlia Chowk post-midnight.',
+    highlightedEntities: ['Token #TK-889', 'Dubai clearing desk', 'Godowlia Chowk'],
+    associatedNodeId: 'ent-al-nahda',
+    associatedNodeName: 'Al-Nahda Exchange (Dubai)',
+    threatRating: 'CRITICAL',
+    riskScore: 96,
+    flaggedKeywords: ['#UFEDExtraction', '#TokenTK889', '#DubaiClearing', '#GodowliaChowk', '#HawalaPostMidnight'],
+    entityIdsToMap: ['ent-al-nahda', 'ent-vicky', 'ent-purvanchal'],
+    chainOfCustody: 'SHA-256 Hash Locked // BSA Section 63 Admissible',
+    hashStamp: 'SHA-256: 7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1f',
+  },
   {
     id: 'soc-01',
     platform: 'Telegram Channel',
@@ -168,9 +188,14 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
   };
 
   return (
-    <div className="h-full w-full flex flex-col bg-slate-900 text-slate-100 overflow-hidden font-sans">
-      {/* Top Header */}
-      <div className="h-14 px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
+    <div className="relative h-full w-full flex flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans">
+      {/* 1. Tactical India Map Background Wireframe (z-0) */}
+      <IndiaMapBackdrop />
+
+      {/* 2. Foreground Content (relative z-10) */}
+      <div className="relative z-10 flex flex-col h-full w-full overflow-hidden">
+        {/* Top Header */}
+        <div className="h-14 px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded bg-sky-950 border border-sky-600/50 flex items-center justify-center text-sky-400">
             <Globe className="w-4 h-4" />
@@ -210,6 +235,7 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
             className="bg-slate-900 border border-slate-700 rounded-md px-3 py-1.5 text-xs font-mono text-slate-300 focus:outline-hidden focus:border-sky-500"
           >
             <option value="ALL">All Sources</option>
+            <option value="WhatsApp Forensic Extraction">WhatsApp UFED Extractions</option>
             <option value="Telegram Channel">Telegram Channels</option>
             <option value="Encrypted Chat Intercept">Encrypted VoIP Intercepts</option>
             <option value="X Burner Handle">X Burner Handles</option>
@@ -257,7 +283,9 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
                   <div className="flex items-center justify-between">
                     <span
                       className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded border uppercase ${
-                        item.platform === 'Telegram Channel'
+                        item.platform === 'WhatsApp Forensic Extraction'
+                          ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                          : item.platform === 'Telegram Channel'
                           ? 'bg-sky-950 text-sky-300 border-sky-800'
                           : item.platform === 'Encrypted Chat Intercept'
                           ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
@@ -293,6 +321,13 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
                     <span>{item.timestamp}</span>
                     <span className="text-slate-400">{item.highlightedEntities.length} entities</span>
                   </div>
+
+                  {item.chainOfCustody && (
+                    <div className="mt-1.5 pt-1.5 border-t border-slate-800/60 flex items-center justify-between text-[9.5px] font-mono text-emerald-400">
+                      <span className="truncate">{item.chainOfCustody}</span>
+                      <Lock className="w-2.5 h-2.5 text-emerald-400 shrink-0 ml-1" />
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -305,7 +340,9 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
             <span className="uppercase font-bold tracking-wider text-slate-300">
               Raw Telemetry & Intercept Excerpt
             </span>
-            <span className="text-emerald-400 font-bold">SEC 63 BSA HASH LOCKED</span>
+            <span className="text-emerald-400 font-bold">
+              {selectedItem?.chainOfCustody ? 'BSA SEC 63 ADMISSIBLE' : 'SEC 63 BSA HASH LOCKED'}
+            </span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 space-y-4">
@@ -359,10 +396,10 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
             <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-[11px] font-mono text-slate-400 space-y-1">
               <div className="text-slate-500 uppercase text-[10px]">Cryptographic Chain-of-Custody</div>
               <div className="text-emerald-400 truncate">
-                SHA-256: e81a9420b92c47a00192e41cba0991828400192
+                {selectedItem?.hashStamp || 'SHA-256: e81a9420b92c47a00192e41cba0991828400192'}
               </div>
               <div className="text-[10px] text-slate-500">
-                Tamper-evident verification certified under Section 63 BSA
+                {selectedItem?.chainOfCustody || 'Tamper-evident verification certified under Section 63 BSA'}
               </div>
             </div>
           </div>
@@ -442,5 +479,6 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
         </div>
       </div>
     </div>
+  </div>
   );
 };

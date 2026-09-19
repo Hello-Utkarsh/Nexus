@@ -66,7 +66,7 @@ export const GovAuthModal: React.FC<GovAuthModalProps> = ({ isOpen = true }) => 
       <div className="absolute inset-0 pointer-events-none opacity-[0.02] bg-slate-700" />
       
       {/* Case Directive Watermark overlay */}
-      <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-8 overflow-hidden select-none opacity-[0.04] text-white">
+      <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-8 overflow-hidden select-none opacity-[0.03] text-white">
         <div className="text-4xl sm:text-6xl font-black font-mono tracking-widest uppercase rotate-[-12deg] transform translate-y-12">
           CRIME BRANCH & STF DIRECTIVE PS 13 COMPLIANT
         </div>
@@ -75,14 +75,17 @@ export const GovAuthModal: React.FC<GovAuthModalProps> = ({ isOpen = true }) => 
         </div>
       </div>
 
-      <div className="relative w-full max-w-3xl bg-slate-900 border border-slate-700 rounded-[3px] shadow-2xl overflow-hidden z-10 my-auto">
+      <div className="relative w-full max-w-3xl bg-slate-900 border border-slate-700 rounded-[2px] shadow-2xl overflow-hidden z-10 my-auto">
+        {/* UX4G Official Portal Header Stripe */}
+        <div className="h-[2px] w-full bg-gradient-to-r from-amber-500 via-slate-200 to-emerald-500 opacity-85" />
+
         {/* Top GovTech Security Bar */}
-        <div className="bg-slate-950 px-6 py-3 border-b border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
+        <div className="bg-slate-950 px-6 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
           <div className="flex items-center space-x-2">
             <span className="w-1.5 h-1.5 rounded-[1px] bg-emerald-500" />
             <span className="text-slate-300 font-semibold tracking-wider">CHAKRAVYUH-OS v2.4</span>
             <span className="text-slate-600">|</span>
-            <span className="text-slate-400 hidden sm:inline">CENTRAL LAW ENFORCEMENT INTELLIGENCE GATEWAY</span>
+            <span className="text-slate-400 hidden sm:inline text-[11px]">CENTRAL LAW ENFORCEMENT INTELLIGENCE GATEWAY</span>
           </div>
           <div className="flex items-center space-x-2 text-[11px] text-amber-300 font-medium bg-amber-950/40 border border-amber-800/60 px-2 py-0.5 rounded-[2px]">
             <Radio className="w-3 h-3 text-amber-400" />
@@ -92,7 +95,7 @@ export const GovAuthModal: React.FC<GovAuthModalProps> = ({ isOpen = true }) => 
 
         <div className="p-6 sm:p-8 space-y-6">
           {/* Header & Official Emblem Representation */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/90 pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
             <div className="flex items-start space-x-4">
               {/* Emblem Placeholder */}
               <div className="relative w-14 h-14 rounded-[2px] bg-slate-950 border border-amber-600/70 flex items-center justify-center p-2 shrink-0 group">
@@ -171,7 +174,7 @@ export const GovAuthModal: React.FC<GovAuthModalProps> = ({ isOpen = true }) => 
                 type="button"
                 onClick={() => handleQuickDemo('Analyst/IO')}
                 disabled={isAuthenticating}
-                className="flex items-center justify-between p-3 bg-slate-900 hover:bg-slate-850 border border-slate-700 rounded-[2px] transition-colors text-left group"
+                className="flex items-center justify-between p-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-[2px] transition-colors text-left group"
               >
                 <div>
                   <div className="text-xs font-semibold text-white group-hover:text-blue-300 flex items-center space-x-1.5">
@@ -191,7 +194,7 @@ export const GovAuthModal: React.FC<GovAuthModalProps> = ({ isOpen = true }) => 
                 type="button"
                 onClick={() => handleQuickDemo('Super Admin')}
                 disabled={isAuthenticating}
-                className="flex items-center justify-between p-3 bg-slate-900 hover:bg-slate-850 border border-slate-700 rounded-[2px] transition-colors text-left group"
+                className="flex items-center justify-between p-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-[2px] transition-colors text-left group"
               >
                 <div>
                   <div className="text-xs font-semibold text-white group-hover:text-amber-300 flex items-center space-x-1.5">

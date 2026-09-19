@@ -19,6 +19,7 @@ import {
   Layers,
   CheckCircle2
 } from 'lucide-react';
+import { IndiaMapBackdrop } from '../dashboard/IndiaMapBackdrop';
 
 export interface TimelineStage {
   step: number;
@@ -128,9 +129,14 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   const currentStageData = TIMELINE_STAGES[activeStage];
 
   return (
-    <div className="h-full w-full flex flex-col bg-slate-900 text-slate-100 overflow-hidden font-sans select-none">
-      {/* Top Header */}
-      <div className="h-14 px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
+    <div className="relative h-full w-full flex flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
+      {/* 1. Tactical India Map Background Wireframe (z-0) */}
+      <IndiaMapBackdrop />
+
+      {/* 2. Foreground Content (relative z-10) */}
+      <div className="relative z-10 flex flex-col h-full w-full overflow-hidden">
+        {/* Top Header */}
+        <div className="h-14 px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded bg-sky-950 border border-sky-600/50 flex items-center justify-center text-sky-400">
             <Clock className="w-4 h-4" />
@@ -356,5 +362,6 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         </div>
       </div>
     </div>
+  </div>
   );
 };

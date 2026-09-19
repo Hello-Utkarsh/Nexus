@@ -45,10 +45,10 @@ export const CaseDossierDoc: React.FC<CaseDossierDocProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-6 font-sans">
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-[3px] shadow-2xl flex flex-col max-h-[92vh] overflow-hidden my-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-6 font-sans print:static print:inset-auto print:bg-white print:p-0 print:overflow-visible print:block">
+      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-[3px] shadow-2xl flex flex-col max-h-[92vh] overflow-hidden my-auto print:border-none print:shadow-none print:max-h-none print:overflow-visible print:bg-white print:w-full print:max-w-none print:m-0">
         {/* Top Action Header */}
-        <div className="h-14 px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div className="h-14 px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0 no-print print:hidden">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-[2px] bg-slate-900 border border-slate-700 flex items-center justify-center text-blue-400">
               <FileCheck2 className="w-4 h-4" />
@@ -88,8 +88,11 @@ export const CaseDossierDoc: React.FC<CaseDossierDocProps> = ({
         </div>
 
         {/* Document Scroll View (Simulating Google Docs / Court Legal Paper) */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-950/60 flex justify-center">
-          <div className="w-full max-w-3xl bg-white text-slate-900 rounded-[2px] shadow-xl p-8 sm:p-12 border border-slate-200 font-serif leading-relaxed text-sm relative select-text print:p-0 print:border-none print:shadow-none">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-950/60 flex justify-center print:p-0 print:bg-white print:overflow-visible print:block">
+          <div 
+            id="printable-court-dossier"
+            className="w-full max-w-3xl bg-white text-slate-900 rounded-[2px] shadow-xl p-8 sm:p-12 border border-slate-200 font-serif leading-relaxed text-sm relative select-text print:p-0 print:border-none print:shadow-none print:max-w-none print:w-full"
+          >
             {/* Watermark */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.035] overflow-hidden select-none">
               <div className="text-6xl font-sans font-black tracking-widest text-slate-900 rotate-[-35deg] uppercase">
@@ -198,21 +201,21 @@ export const CaseDossierDoc: React.FC<CaseDossierDocProps> = ({
                 Pursuant to Section 63 of the Bharatiya Sakshya Adhiniyam, 2023, the undersigned Investigating Officer certifies that this electronic dossier was compiled under controlled hash validation:
               </p>
 
-              <div className="bg-slate-900 text-slate-100 p-3.5 rounded-md font-mono text-xs space-y-2">
-                <div className="flex items-center justify-between text-[11px] text-slate-400">
+              <div className="bg-slate-900 text-slate-100 p-3.5 rounded-md font-mono text-xs space-y-2 print:bg-slate-100 print:text-slate-900 print:border print:border-slate-300">
+                <div className="flex items-center justify-between text-[11px] text-slate-400 print:text-slate-600">
                   <span>FORENSIC LEDGER SHA-256 DIGITAL FINGERPRINT</span>
                   <button
                     onClick={handleCopyHash}
-                    className="text-sky-400 hover:text-sky-300 flex items-center space-x-1"
+                    className="text-sky-400 hover:text-sky-300 flex items-center space-x-1 no-print print:hidden"
                   >
                     {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                     <span>{copied ? 'Copied' : 'Copy Hash'}</span>
                   </button>
                 </div>
-                <div className="text-emerald-400 font-bold break-all">
+                <div className="text-emerald-400 print:text-slate-900 font-bold break-all">
                   {sha256Hash}
                 </div>
-                <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800 flex justify-between">
+                <div className="text-[10px] text-slate-400 print:text-slate-600 pt-1 border-t border-slate-800 print:border-slate-300 flex justify-between">
                   <span>TIMESTAMP: 2026-09-18T18:48:12 IST</span>
                   <span>STATUS: TAMPER-EVIDENT SECURED</span>
                 </div>

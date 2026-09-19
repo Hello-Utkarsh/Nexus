@@ -20,9 +20,11 @@ import {
   Maximize2,
   X,
   Lock,
-  ArrowRight
+  ArrowRight,
+  UploadCloud
 } from 'lucide-react';
 import { Evidence, Entity } from '../../types/intelligence';
+import { IndiaMapBackdrop } from '../dashboard/IndiaMapBackdrop';
 
 export type EvidenceCategory = 'ALL' | 'FIR' | 'CDR' | 'CCTV' | 'HAWALA';
 
@@ -31,6 +33,7 @@ interface EvidenceVaultViewProps {
   entities: Entity[];
   onViewInNetwork: (entityIds: string[]) => void;
   onSelectSourceTag?: (tag: string) => void;
+  onOpenIngestEvidence?: () => void;
 }
 
 export const EvidenceVaultView: React.FC<EvidenceVaultViewProps> = ({
@@ -38,6 +41,7 @@ export const EvidenceVaultView: React.FC<EvidenceVaultViewProps> = ({
   entities,
   onViewInNetwork,
   onSelectSourceTag,
+  onOpenIngestEvidence,
 }) => {
   const [activeCategory, setActiveCategory] = useState<EvidenceCategory>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,9 +77,14 @@ export const EvidenceVaultView: React.FC<EvidenceVaultViewProps> = ({
   };
 
   return (
-    <div className="h-full w-full flex flex-col bg-slate-900 text-slate-100 overflow-hidden font-sans select-none">
-      {/* Top Header */}
-      <div className="h-14 px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
+    <div className="relative h-full w-full flex flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
+      {/* 1. Tactical India Map Background Wireframe (z-0) */}
+      <IndiaMapBackdrop />
+
+      {/* 2. Foreground Content (relative z-10) */}
+      <div className="relative z-10 flex flex-col h-full w-full overflow-hidden">
+        {/* Top Header */}
+        <div className="h-14 px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded bg-sky-950 border border-sky-600/50 flex items-center justify-center text-sky-400">
             <FileText className="w-4 h-4" />
@@ -110,25 +119,38 @@ export const EvidenceVaultView: React.FC<EvidenceVaultViewProps> = ({
         </div>
       </div>
 
-      {/* Filter Pills Bar */}
-      <div className="px-6 py-3 bg-slate-950/70 border-b border-slate-800 flex items-center space-x-2 flex-wrap gap-y-2">
-        <span className="text-slate-500 text-xs font-mono uppercase mr-1">Filter:</span>
-        {categories.map((cat) => {
-          const isActive = activeCategory === cat.id;
-          return (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id as EvidenceCategory)}
-              className={`px-3 py-1 rounded text-xs font-mono transition-all ${
-                isActive
-                  ? 'bg-sky-600 text-white font-bold shadow-xs'
-                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-              }`}
-            >
-              {cat.label}
-            </button>
-          );
-        })}
+      {/* Filter Pills Bar & Upload Evidence Action */}
+      <div className="px-6 py-3 bg-slate-950/70 border-b border-slate-800 flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center space-x-2 flex-wrap gap-y-2">
+          <span className="text-slate-500 text-xs font-mono uppercase mr-1">Filter:</span>
+          {categories.map((cat) => {
+            const isActive = activeCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id as EvidenceCategory)}
+                className={`px-3 py-1 rounded text-xs font-mono transition-all ${
+                  isActive
+                    ? 'bg-sky-600 text-white font-bold shadow-xs'
+                    : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                }`}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {onOpenIngestEvidence && (
+          <button
+            onClick={onOpenIngestEvidence}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-[2px] text-xs font-mono font-bold uppercase tracking-wider transition-colors shadow-xs shrink-0"
+            title="Upload audio, video, or document evidence into active case vault"
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>+ Upload Case Evidence</span>
+          </button>
+        )}
       </div>
 
       {/* Main Evidence Grid */}
@@ -484,5 +506,6 @@ export const EvidenceVaultView: React.FC<EvidenceVaultViewProps> = ({
         </div>
       )}
     </div>
+  </div>
   );
 };

@@ -18,8 +18,12 @@ import {
   AlertTriangle, 
   FileText, 
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  FolderPlus,
+  UploadCloud,
+  X
 } from 'lucide-react';
+import { IndiaMapBackdrop } from '../dashboard/IndiaMapBackdrop';
 
 export type CaseStatus = 'CRITICAL ACTIVE' | 'UNDER SURVEILLANCE' | 'CLOSED/ARCHIVED';
 
@@ -41,10 +45,19 @@ export interface AssignedCase {
 }
 
 interface MyInvestigationsViewProps {
+  cases?: AssignedCase[];
   onSelectCase: (caseId: string) => void;
   onOpenNewInvestigation: () => void;
+  onOpenRegisterCase?: () => void;
   onOpenExportReport: () => void;
   onOpenDossier?: (caseId: string) => void;
+  registrationToast?: {
+    caseNumber: string;
+    directive: string;
+    unit: string;
+    caseId: string;
+  } | null;
+  onDismissToast?: () => void;
 }
 
 export const INITIAL_ASSIGNED_CASES: AssignedCase[] = [
@@ -99,12 +112,17 @@ export const INITIAL_ASSIGNED_CASES: AssignedCase[] = [
 ];
 
 export const MyInvestigationsView: React.FC<MyInvestigationsViewProps> = ({
+  cases: externalCases,
   onSelectCase,
   onOpenNewInvestigation,
+  onOpenRegisterCase,
   onOpenExportReport,
   onOpenDossier,
+  registrationToast,
+  onDismissToast,
 }) => {
-  const [cases] = useState<AssignedCase[]>(INITIAL_ASSIGNED_CASES);
+  const [internalCases] = useState<AssignedCase[]>(INITIAL_ASSIGNED_CASES);
+  const cases = externalCases || internalCases;
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'CRITICAL ACTIVE' | 'UNDER SURVEILLANCE' | 'CLOSED/ARCHIVED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -127,9 +145,14 @@ export const MyInvestigationsView: React.FC<MyInvestigationsViewProps> = ({
   }, [cases, statusFilter, searchQuery]);
 
   return (
-    <div className="h-full w-full flex flex-col bg-slate-900 text-slate-100 overflow-hidden font-sans">
-      {/* Top Header */}
-      <div className="h-14 px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
+    <div className="relative h-full w-full flex flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans">
+      {/* 1. Tactical India Map Background Wireframe (z-0) */}
+      <IndiaMapBackdrop />
+
+      {/* 2. Foreground Content (relative z-10) */}
+      <div className="relative z-10 flex flex-col h-full w-full overflow-hidden">
+        {/* Top Header */}
+        <div className="h-14 px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded bg-sky-950 border border-sky-600/50 flex items-center justify-center text-sky-400">
             <FolderOpen className="w-4 h-4" />
@@ -180,15 +203,56 @@ export const MyInvestigationsView: React.FC<MyInvestigationsViewProps> = ({
             <span>Case Export</span>
           </button>
 
+          {/* Prominent Button: Register Brand New Case */}
+          <button
+            onClick={onOpenRegisterCase}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-[2px] text-xs font-mono font-bold uppercase tracking-wider shadow-xs transition-colors"
+            title="Register Brand New STF Investigation Docket"
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
+            <span>+ REGISTER NEW CASE</span>
+          </button>
+
+          {/* Ingest Evidence to Active Case */}
           <button
             onClick={onOpenNewInvestigation}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-md text-xs font-mono font-semibold shadow-xs transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 rounded-[2px] text-xs font-mono transition-colors"
+            title="Ingest evidence records into active case graph"
           >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span>+ Ingest New Case</span>
+            <UploadCloud className="w-3.5 h-3.5 text-blue-400" />
+            <span className="hidden sm:inline">+ Ingest Evidence</span>
           </button>
         </div>
       </div>
+
+      {/* Registration Toast / Banner */}
+      {registrationToast && (
+        <div className="mx-6 mt-3 p-3 bg-emerald-950/80 border border-emerald-700 rounded-[2px] text-xs font-mono text-emerald-300 flex items-center justify-between shadow-lg">
+          <div className="flex items-center space-x-2.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>
+              Case <strong>{registrationToast.caseNumber}</strong> Registered Successfully under Section 111 BNS. Case Vault Initialized.
+            </span>
+          </div>
+          <div className="flex items-center space-x-2 shrink-0">
+            <button
+              onClick={() => onSelectCase(registrationToast.caseId)}
+              className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded-[2px] font-bold text-[10.5px] uppercase tracking-wider transition-colors"
+            >
+              Set as Active Case
+            </button>
+            {onDismissToast && (
+              <button
+                onClick={onDismissToast}
+                className="p-1 text-emerald-400 hover:text-white rounded transition-colors"
+                title="Dismiss banner"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Control & Filter Strip */}
       <div className="px-6 py-3 bg-slate-950/70 border-b border-slate-800 flex items-center justify-between flex-wrap gap-3">
@@ -414,5 +478,6 @@ export const MyInvestigationsView: React.FC<MyInvestigationsViewProps> = ({
         )}
       </div>
     </div>
+  </div>
   );
 };

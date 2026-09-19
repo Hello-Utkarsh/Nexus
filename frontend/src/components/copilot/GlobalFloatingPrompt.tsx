@@ -22,7 +22,8 @@ import {
   Copy, 
   Check,
   Minimize2,
-  Maximize2
+  Maximize2,
+  User
 } from 'lucide-react';
 
 interface GlobalFloatingPromptProps {
@@ -42,9 +43,11 @@ interface WantedCriminal {
   score: number;
   wantedFor: string;
   status: 'ACTIVE FUGITIVE' | 'LOC ISSUED' | 'RED CORNER DISPATCHED';
+  bookingNo: string;
+  classificationBadge: string;
 }
 
-const TOP_WANTED_CRIMINALS: WantedCriminal[] = [
+export const TOP_WANTED_CRIMINALS: WantedCriminal[] = [
   {
     id: 'ent-vicky',
     name: 'Vikramaditya @ Vicky Kashi',
@@ -55,6 +58,8 @@ const TOP_WANTED_CRIMINALS: WantedCriminal[] = [
     score: 96,
     wantedFor: 'BNS 111 (Organized Crime Syndicate), Sec 308(4) Extortion, Arms Act',
     status: 'RED CORNER DISPATCHED',
+    bookingNo: '#941-VK',
+    classificationBadge: 'TIER-1 MASTERMIND',
   },
   {
     id: 'ent-tariq',
@@ -66,6 +71,8 @@ const TOP_WANTED_CRIMINALS: WantedCriminal[] = [
     score: 92,
     wantedFor: 'PMLA (Money Laundering), Cross-Border Hawala Layering, BNS 111',
     status: 'ACTIVE FUGITIVE',
+    bookingNo: '#412-TR',
+    classificationBadge: 'CROSS-BORDER HAWALA',
   },
   {
     id: 'ent-sharad',
@@ -77,6 +84,8 @@ const TOP_WANTED_CRIMINALS: WantedCriminal[] = [
     score: 88,
     wantedFor: 'Contract Extortion, BNS 103 (Attempted Homicide), Sec 25 Arms Act',
     status: 'LOC ISSUED',
+    bookingNo: '#108-ST',
+    classificationBadge: 'CONTRACT ENFORCER',
   },
   {
     id: 'ent-imran',
@@ -88,6 +97,8 @@ const TOP_WANTED_CRIMINALS: WantedCriminal[] = [
     score: 81,
     wantedFor: 'Illegal GSM/VoIP Gateway, Sec 4 Indian Telegraph Act, Forgery',
     status: 'ACTIVE FUGITIVE',
+    bookingNo: '#329-IM',
+    classificationBadge: 'VOIP GATEWAY GHOST',
   },
   {
     id: 'ent-rahul',
@@ -99,6 +110,8 @@ const TOP_WANTED_CRIMINALS: WantedCriminal[] = [
     score: 85,
     wantedFor: 'BNS 318(4) Cheating, Hawala Cash Courier Coordination, PMLA',
     status: 'LOC ISSUED',
+    bookingNo: '#824-RS',
+    classificationBadge: 'FINANCIAL COURIER',
   },
 ];
 
@@ -260,11 +273,49 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
               </div>
             </div>
 
-            {/* Scrollable Quick Presets & Guidance Body */}
+            {/* Quick Suggested Query Chips (matching Investigation Copilot pattern) */}
+            <div className="p-3 border-b border-slate-800 bg-slate-900/60 shrink-0">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1.5">
+                Suggested Queries
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => executeQuery('interpol')}
+                  disabled={isAnalyzing}
+                  className="text-[11px] font-mono text-slate-300 bg-slate-900 hover:bg-slate-850 hover:text-white border border-slate-700 hover:border-slate-600 px-2.5 py-1 rounded-[2px] transition-colors flex items-center space-x-1.5 shadow-2xs"
+                >
+                  <ShieldAlert className="w-3 h-3 text-rose-400 shrink-0" />
+                  <span>Top 5 Wanted Criminals</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => executeQuery('hawala')}
+                  disabled={isAnalyzing}
+                  className="text-[11px] font-mono text-slate-300 bg-slate-900 hover:bg-slate-850 hover:text-white border border-slate-700 hover:border-slate-600 px-2.5 py-1 rounded-[2px] transition-colors flex items-center space-x-1.5 shadow-2xs"
+                >
+                  <Network className="w-3 h-3 text-amber-400 shrink-0" />
+                  <span>Trace Hawala Layering Loop</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => executeQuery('mastermind')}
+                  disabled={isAnalyzing}
+                  className="text-[11px] font-mono text-slate-300 bg-slate-900 hover:bg-slate-850 hover:text-white border border-slate-700 hover:border-slate-600 px-2.5 py-1 rounded-[2px] transition-colors flex items-center space-x-1.5 shadow-2xs"
+                >
+                  <Terminal className="w-3 h-3 text-emerald-400 shrink-0" />
+                  <span>Isolate Zero-Call Mastermind</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Intelligence Guidance & Context Body */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 font-sans">
               {/* Guidance Notice */}
-              <div className="p-2.5 bg-slate-900/80 rounded-xl border border-slate-800/90 text-xs font-mono text-slate-300 space-y-1">
-                <div className="text-[10px] uppercase text-sky-400 font-bold flex items-center space-x-1">
+              <div className="p-2.5 bg-slate-900/80 rounded-[2px] border border-slate-800 text-xs font-mono text-slate-300 space-y-1">
+                <div className="text-[10px] uppercase text-blue-400 font-bold flex items-center space-x-1">
                   <Sparkles className="w-3 h-3" />
                   <span>Real-Time Intelligence Presets</span>
                 </div>
@@ -273,76 +324,22 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
                 </p>
               </div>
 
-              {/* Quick Preset Buttons */}
-              <div className="space-y-2">
-                <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
-                  Tactical Query Presets
+              {/* Active Intelligence Context Information */}
+              <div className="p-3 bg-slate-900/50 rounded-[2px] border border-slate-800/80 text-xs font-mono text-slate-400 space-y-1.5">
+                <div className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">
+                  Knowledge Graph Scope
                 </div>
-
-                {/* Preset 1 */}
-                <button
-                  type="button"
-                  onClick={() => executeQuery('interpol')}
-                  disabled={isAnalyzing}
-                  className="w-full text-left p-3 bg-slate-900/90 hover:bg-slate-850 hover:border-sky-500/80 border border-slate-800 rounded-xl transition-all group flex items-start space-x-2.5 shadow-sm"
-                >
-                  <div className="p-1.5 rounded-lg bg-sky-950 border border-sky-800/80 text-sky-400 group-hover:text-white shrink-0 mt-0.5">
-                    <ShieldAlert className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-mono font-bold text-white group-hover:text-sky-300 transition-colors">
-                      🚨 Top 5 Wanted Criminals
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-sans mt-0.5 leading-snug">
-                      Cross-reference Interpol Red Notices & STF active fugitives.
-                    </div>
-                  </div>
-                </button>
-
-                {/* Preset 2 */}
-                <button
-                  type="button"
-                  onClick={() => executeQuery('hawala')}
-                  disabled={isAnalyzing}
-                  className="w-full text-left p-3 bg-slate-900/90 hover:bg-slate-850 hover:border-amber-500/80 border border-slate-800 rounded-xl transition-all group flex items-start space-x-2.5 shadow-sm"
-                >
-                  <div className="p-1.5 rounded-lg bg-amber-950 border border-amber-800/80 text-amber-400 group-hover:text-white shrink-0 mt-0.5">
-                    <Network className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-mono font-bold text-white group-hover:text-amber-300 transition-colors">
-                      💸 Trace Hawala Layering Loop
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-sans mt-0.5 leading-snug">
-                      Assi Ghat Tower 71 corridor & Axis Bank #9182 smurfing trail.
-                    </div>
-                  </div>
-                </button>
-
-                {/* Preset 3 */}
-                <button
-                  type="button"
-                  onClick={() => executeQuery('mastermind')}
-                  disabled={isAnalyzing}
-                  className="w-full text-left p-3 bg-slate-900/90 hover:bg-slate-850 hover:border-emerald-500/80 border border-slate-800 rounded-xl transition-all group flex items-start space-x-2.5 shadow-sm"
-                >
-                  <div className="p-1.5 rounded-lg bg-emerald-950 border border-emerald-800/80 text-emerald-400 group-hover:text-white shrink-0 mt-0.5">
-                    <Terminal className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-mono font-bold text-white group-hover:text-emerald-300 transition-colors">
-                      👑 Isolate Zero-Call Mastermind
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-sans mt-0.5 leading-snug">
-                      Prove Vicky Kashi central controller via Betweenness Centrality (0.942).
-                    </div>
-                  </div>
-                </button>
+                <div className="text-[11px] text-slate-300">
+                  Target: <span className="text-white font-semibold">Vikramaditya @ Vicky Kashi (VK-7)</span>
+                </div>
+                <div className="text-[10.5px] text-slate-500">
+                  42 Entities • 87 Edges • Tower-71 CDR Intercepts Loaded
+                </div>
               </div>
             </div>
 
             {/* Bottom Input Command Bar */}
-            <div className="p-3 bg-slate-900/95 border-t border-slate-800 space-y-1.5 shrink-0">
+            <div className="p-3 bg-slate-900 border-t border-slate-800 space-y-1.5 shrink-0">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -359,7 +356,7 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
                   value={inputQuery}
                   onChange={(e) => setInputQuery(e.target.value)}
                   placeholder="Query case telemetry or warrants... (Ctrl+K)"
-                  className="flex-1 bg-slate-950 border border-slate-700 rounded-xl pl-3 pr-8 py-2 text-xs font-mono text-white placeholder-slate-500 focus:outline-hidden focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all shadow-inner"
+                  className="flex-1 bg-slate-950 border border-slate-700 rounded-[2px] pl-3 pr-8 py-2 text-xs font-mono text-white placeholder-slate-500 focus:outline-hidden focus:border-blue-500 transition-colors shadow-inner"
                 />
                 {inputQuery && (
                   <button
@@ -374,10 +371,10 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
                 <button
                   type="submit"
                   disabled={isAnalyzing || !inputQuery.trim()}
-                  className="p-2 bg-sky-600 hover:bg-sky-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-xl shadow-sm transition-all shrink-0 flex items-center justify-center group"
+                  className="p-2 bg-blue-700 hover:bg-blue-600 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-[2px] transition-colors shrink-0 flex items-center justify-center border border-blue-600"
                   title="Execute Copilot Query"
                 >
-                  <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  <Send className="w-3.5 h-3.5" />
                 </button>
               </form>
 
@@ -482,7 +479,8 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
                       <table className="w-full text-left text-xs font-mono">
                         <thead className="bg-slate-950 border-b border-slate-800 text-[11px] text-slate-400 uppercase">
                           <tr>
-                            <th className="p-3">Target Name & Alias</th>
+                            <th className="p-3 w-16 text-center">Biometrics</th>
+                            <th className="p-3">Target Name & Classification</th>
                             <th className="p-3">Red Notice Ref</th>
                             <th className="p-3">Issuing Agency</th>
                             <th className="p-3">Threat Level</th>
@@ -493,9 +491,37 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
                         <tbody className="divide-y divide-slate-800/80 bg-slate-900/60">
                           {TOP_WANTED_CRIMINALS.map((crim) => (
                             <tr key={crim.id} className="hover:bg-slate-800/40 transition-colors">
+                              {/* Biometric Suspect Mugshot Portrait */}
+                              <td className="p-2.5 text-center">
+                                <div className="w-11 h-13 mx-auto rounded-[2px] bg-slate-950 border border-slate-750 relative overflow-hidden flex flex-col items-center justify-between group shadow-inner">
+                                  {/* Biometric scan reticle ticks */}
+                                  <div className="absolute inset-0 pointer-events-none opacity-25">
+                                    <div className="absolute top-1 left-1 w-1.5 h-1.5 border-t border-l border-cyan-400" />
+                                    <div className="absolute top-1 right-1 w-1.5 h-1.5 border-t border-r border-cyan-400" />
+                                    <div className="absolute bottom-4 left-1 w-1.5 h-1.5 border-b border-l border-cyan-400" />
+                                    <div className="absolute bottom-4 right-1 w-1.5 h-1.5 border-b border-r border-cyan-400" />
+                                  </div>
+
+                                  {/* Desaturated Suspect Bust Silhouette */}
+                                  <div className="mt-1.5 flex items-center justify-center text-slate-400 group-hover:text-slate-200 transition-colors">
+                                    <User className="w-6 h-6 stroke-[1.5]" />
+                                  </div>
+
+                                  {/* Booking Plate Overlay */}
+                                  <div className="w-full bg-slate-900 border-t border-slate-800 text-[8px] font-mono text-slate-300 font-bold tracking-tighter py-0.2">
+                                    {crim.bookingNo}
+                                  </div>
+                                </div>
+                              </td>
+
                               <td className="p-3">
-                                <div className="font-bold text-white text-xs">{crim.name}</div>
-                                <div className="text-[10px] text-sky-400">{crim.alias}</div>
+                                <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                                  <span className="font-bold text-white text-xs">{crim.name}</span>
+                                  <span className="px-1.5 py-0.2 rounded-[2px] text-[8.5px] font-mono font-bold bg-rose-950 text-rose-300 border border-rose-800 uppercase tracking-tight">
+                                    {crim.classificationBadge}
+                                  </span>
+                                </div>
+                                <div className="text-[10px] text-sky-400 mt-0.5">{crim.alias}</div>
                               </td>
                               <td className="p-3 text-slate-300 font-mono text-[11px]">
                                 {crim.redNoticeRef}
@@ -520,7 +546,7 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
                               <td className="p-3 text-right">
                                 <button
                                   onClick={() => handleHighlightInGraph([crim.id], crim.id)}
-                                  className="px-2 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded text-[10px] font-mono font-semibold transition-colors shrink-0"
+                                  className="px-2 py-1 bg-blue-700 hover:bg-blue-600 text-white rounded-[2px] text-[10px] font-mono font-semibold transition-colors shrink-0"
                                 >
                                   Isolate
                                 </button>
@@ -539,9 +565,9 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
                     </span>
                     <button
                       onClick={() => handleHighlightInGraph(TOP_WANTED_CRIMINALS.map(c => c.id))}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-xs font-mono flex items-center space-x-1.5 transition-colors"
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 rounded-[2px] text-xs font-mono flex items-center space-x-1.5 transition-colors"
                     >
-                      <Network className="w-3.5 h-3.5 text-sky-400" />
+                      <Network className="w-3.5 h-3.5 text-blue-400" />
                       <span>Highlight All 5 in Graph Canvas</span>
                     </button>
                   </div>
@@ -580,16 +606,16 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
                   </div>
 
                   {/* Evidentiary Hash Reference */}
-                  <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-xs font-mono flex items-center justify-between">
+                  <div className="p-3 bg-slate-950 rounded-[2px] border border-slate-800 text-xs font-mono flex items-center justify-between">
                     <div className="space-y-0.5">
                       <div className="text-[10px] text-slate-500 uppercase">Evidentiary Chain-of-Custody</div>
                       <div className="text-slate-300 text-[11px]">
-                        WT-LOG-902-TAP // TXN-RTGS-AXIS-9812 // SEC 63 BSA HASH: <span className="text-sky-400">c61a...99e4</span>
+                        WT-LOG-902-TAP // TXN-RTGS-AXIS-9812 // SEC 63 BSA HASH: <span className="text-blue-400">c61a...99e4</span>
                       </div>
                     </div>
                     <button
                       onClick={() => copyResultText('WT-LOG-902-TAP | TXN-RTGS-AXIS-9812 | c61a7a28e3b441f99e4d01b')}
-                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[11px] flex items-center space-x-1"
+                      className="px-2 py-1 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-[2px] text-[11px] flex items-center space-x-1 transition-colors"
                     >
                       {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
                       <span>{copied ? 'Copied' : 'Copy'}</span>
@@ -600,7 +626,7 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
                   <div className="pt-2 flex items-center justify-end space-x-3">
                     <button
                       onClick={() => handleHighlightInGraph(['ent-vicky', 'ent-axis', 'ent-al-nahda', 'ent-rahul'], 'ent-axis')}
-                      className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-mono font-bold flex items-center space-x-2 shadow-md transition-all"
+                      className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-[2px] text-xs font-mono font-bold flex items-center space-x-2 transition-colors border border-blue-600"
                     >
                       <Network className="w-4 h-4" />
                       <span>Highlight in Graph Canvas</span>
@@ -613,28 +639,28 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
               {/* CASE 3: ISOLATE ZERO-CALL MASTERMIND */}
               {activeResultModal === 'mastermind' && (
                 <div className="space-y-4">
-                  <div className="bg-slate-950/80 border border-emerald-700/60 rounded-lg p-4 space-y-2">
+                  <div className="bg-slate-950 border border-emerald-800/80 rounded-[2px] p-4 space-y-2">
                     <div className="flex items-center space-x-2 text-xs font-mono font-bold text-emerald-400 uppercase">
                       <ShieldCheck className="w-4 h-4 text-emerald-400" />
                       <span>Centrality Heuristic: Zero-Call Kingpin De-Anonymization</span>
                     </div>
                     <p className="text-xs text-slate-200 leading-relaxed font-sans">
-                      Target <span className="text-sky-300 font-mono font-semibold">Vikramaditya @ Vicky Kashi</span> exhibits a Betweenness Centrality of <span className="text-emerald-400 font-mono font-bold">0.942</span> (highest in the 42-node network). Crucially, the target makes <span className="text-rose-400 font-bold">0 direct cellular calls</span> to lower-tier operational hitmen or mules. Communication is exclusively channeled through SIP VOIP burner relays and encrypted messenger handles.
+                      Target <span className="text-blue-300 font-mono font-semibold">Vikramaditya @ Vicky Kashi</span> exhibits a Betweenness Centrality of <span className="text-emerald-400 font-mono font-bold">0.942</span> (highest in the 42-node network). Crucially, the target makes <span className="text-rose-400 font-bold">0 direct cellular calls</span> to lower-tier operational hitmen or mules. Communication is exclusively channeled through SIP VOIP burner relays and encrypted messenger handles.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
-                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                    <div className="bg-slate-950 p-3 rounded-[2px] border border-slate-800">
                       <div className="text-[10px] text-slate-500 uppercase">Betweenness Centrality</div>
                       <div className="text-emerald-400 font-bold text-base mt-0.5">0.942</div>
                       <div className="text-slate-400 text-[10px]">Threshold: ≥ 0.85 (Critical)</div>
                     </div>
-                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                    <div className="bg-slate-950 p-3 rounded-[2px] border border-slate-800">
                       <div className="text-[10px] text-slate-500 uppercase">Direct Voice Calls</div>
                       <div className="text-rose-400 font-bold text-base mt-0.5">0 Calls</div>
                       <div className="text-slate-400 text-[10px]">Zero-Direct-Contact Ring</div>
                     </div>
-                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                    <div className="bg-slate-950 p-3 rounded-[2px] border border-slate-800">
                       <div className="text-[10px] text-slate-500 uppercase">Prime Accused Rank</div>
                       <div className="text-white font-bold text-base mt-0.5">Tier-1 Mastermind</div>
                       <div className="text-slate-400 text-[10px]">FIR #382/2026 Assi Ghat</div>
@@ -644,7 +670,7 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
                   <div className="pt-2 flex items-center justify-end space-x-3">
                     <button
                       onClick={() => handleHighlightInGraph(['ent-vicky', 'ent-rahul', 'ent-sharad'], 'ent-vicky')}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-mono font-bold flex items-center space-x-2 shadow-md transition-all"
+                      className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-[2px] text-xs font-mono font-bold flex items-center space-x-2 transition-colors border border-emerald-600"
                     >
                       <Network className="w-4 h-4" />
                       <span>Isolate on Graph Workbench</span>
@@ -657,12 +683,12 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
               {/* CASE 4: AD-HOC CUSTOM QUERY RESPONSE */}
               {activeResultModal === 'custom' && (
                 <div className="space-y-4">
-                  <div className="bg-slate-950/80 border border-slate-800 rounded-lg p-4 space-y-3">
-                    <div className="flex items-center space-x-2 text-xs font-mono font-bold text-sky-400">
+                  <div className="bg-slate-950 border border-slate-800 rounded-[2px] p-4 space-y-3">
+                    <div className="flex items-center space-x-2 text-xs font-mono font-bold text-blue-400">
                       <Terminal className="w-4 h-4" />
                       <span>Copilot Synthesized Analysis</span>
                     </div>
-                    <p className="text-xs text-slate-200 leading-relaxed font-sans bg-slate-900 p-3 rounded border border-slate-800">
+                    <p className="text-xs text-slate-200 leading-relaxed font-sans bg-slate-900 p-3 rounded-[2px] border border-slate-800">
                       {customResponseText}
                     </p>
                   </div>
@@ -670,7 +696,7 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
                   <div className="flex items-center justify-between pt-2 text-xs font-mono">
                     <button
                       onClick={() => copyResultText(customResponseText)}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded flex items-center space-x-1.5 transition-colors"
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 rounded-[2px] flex items-center space-x-1.5 transition-colors"
                     >
                       {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
                       <span>{copied ? 'Copied to Clipboard' : 'Copy Analysis'}</span>
@@ -678,7 +704,7 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
 
                     <button
                       onClick={() => handleHighlightInGraph(['ent-vicky', 'ent-axis', 'ent-al-nahda'], 'ent-vicky')}
-                      className="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded font-bold flex items-center space-x-1.5 transition-colors shadow-sm"
+                      className="px-3.5 py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-[2px] font-bold flex items-center space-x-1.5 transition-colors border border-blue-600"
                     >
                       <Network className="w-3.5 h-3.5" />
                       <span>Highlight in Graph Canvas</span>

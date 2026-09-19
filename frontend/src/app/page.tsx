@@ -7,11 +7,12 @@ import { GovAuthModal } from '../components/auth/GovAuthModal';
 import { AuditDock } from '../components/admin/AuditDock';
 import { SocmintView } from '../components/socmint/SocmintView';
 import { InvestigationsView } from '../components/investigations/InvestigationsView';
-import { MyInvestigationsView } from '../components/investigations/MyInvestigationsView';
+import { MyInvestigationsView, INITIAL_ASSIGNED_CASES, AssignedCase } from '../components/investigations/MyInvestigationsView';
+import { RegisterNewCaseModal } from '../components/investigations/RegisterNewCaseModal';
 import { CaseMetadataBar } from '../components/investigations/CaseMetadataBar';
 import { CaseDossierDoc } from '../components/investigations/CaseDossierDoc';
 import { TimelineView } from '../components/timeline/TimelineView';
-import { LandingHero } from '../components/LandingHero';
+import { OverviewView } from '../components/dashboard/OverviewView';
 import { NetworkWorkbench } from '../components/network/NetworkWorkbench';
 import { GraphCanvas } from '../components/GraphCanvas';
 import { NetworkFiltersDrawer } from '../components/NetworkFiltersDrawer';
@@ -30,6 +31,7 @@ import { InvestigationReportModal } from '../components/InvestigationReportModal
 import { CommandPalette } from '../components/CommandPalette';
 import { EdgeEvidencePopover } from '../components/EdgeEvidencePopover';
 import { GlobalFloatingPrompt } from '../components/copilot/GlobalFloatingPrompt';
+import { GuidedTourModal } from '../components/common/GuidedTourModal';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 
 import { 
@@ -74,17 +76,61 @@ function ChakravyuhPlatformInner() {
 
   // Modals & Drawers
   const [isNewInvestigationOpen, setIsNewInvestigationOpen] = useState(false);
+  const [isIngestEvidenceOpen, setIsIngestEvidenceOpen] = useState(false);
+  const [isRegisterCaseOpen, setIsRegisterCaseOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDossierDocOpen, setIsDossierDocOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [isTourActive, setIsTourActive] = useState(false);
   const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
   const [isInspectorCollapsed, setIsInspectorCollapsed] = useState(false);
   const [selectedSourceTag, setSelectedSourceTag] = useState<string | null>(null);
 
+  // Cases Collection & Registration State
+  const [cases, setCases] = useState<AssignedCase[]>(INITIAL_ASSIGNED_CASES);
+  const [registrationToast, setRegistrationToast] = useState<{
+    caseNumber: string;
+    directive: string;
+    unit: string;
+    caseId: string;
+  } | null>(null);
+
   // Active Case Directive & Metadata
   const [activeCaseDirective, setActiveCaseDirective] = useState('OP: Operation Syndicate-Viper // FIR #382/2026');
-  const [activeUnitName, setActiveUnitName] = useState('UP-STF Special Cell (Varanasi / Lucknow Range)');
+  const [activeUnitName, setActiveUnitName] = useState('UP-STF (Varanasi/Lucknow)');
+
+  const handleRegisterCase = useCallback((newCase: AssignedCase, makeActive: boolean) => {
+    setCases((prev) => [newCase, ...prev]);
+    setRegistrationToast({
+      caseNumber: newCase.caseNumber,
+      directive: newCase.directive,
+      unit: newCase.unit,
+      caseId: newCase.id,
+    });
+    if (makeActive) {
+      setActiveCaseDirective(newCase.directive);
+      setActiveUnitName(newCase.unit);
+      setActiveTab('network');
+      setFocusEntityId('ent-vicky');
+    } else {
+      setActiveTab('investigations');
+    }
+  }, []);
+
+  // Global keyboard shortcuts: Ctrl+K toggles Copilot, Esc closes Copilot
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCopilotOpen(prev => !prev);
+      } else if (e.key === 'Escape') {
+        setIsCopilotOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Network Filtering State
   const [selectedTypes, setSelectedTypes] = useState<Set<EntityType>>(
@@ -308,6 +354,7 @@ function ChakravyuhPlatformInner() {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           onOpenAuditDock={() => setIsAuditDockOpen(true)}
+          isTourActive={isTourActive}
         />
       </div>
 
@@ -330,7 +377,9 @@ function ChakravyuhPlatformInner() {
             entitiesCount={entities.length}
             relationshipsCount={relationships.length}
             patternsCount={patterns.length}
-            onOpenNewInvestigation={() => setIsNewInvestigationOpen(true)}
+            onOpenNewInvestigation={() => setIsIngestEvidenceOpen(true)}
+            onOpenIngestEvidence={() => setIsIngestEvidenceOpen(true)}
+            onOpenRegisterCase={() => setIsRegisterCaseOpen(true)}
             onOpenExportReport={() => setIsReportModalOpen(true)}
             onOpenSearch={() => setIsSearchOpen(true)}
             onOpenAuditDock={() => setIsAuditDockOpen(true)}
@@ -341,6 +390,8 @@ function ChakravyuhPlatformInner() {
             caseDirective={activeCaseDirective}
             unitName={activeUnitName}
             onExportExhibit={() => setIsDossierDocOpen(true)}
+            onOpenCopilot={() => setIsCopilotOpen(true)}
+            onStartTour={() => setIsTourActive(true)}
           />
         </div>
 
@@ -348,15 +399,13 @@ function ChakravyuhPlatformInner() {
         <div className="flex-1 w-full relative">
           {/* VIEW A: OVERVIEW / LANDING */}
           {activeTab === 'overview' && (
-            <div className="w-full min-h-full bg-slate-950">
-              <LandingHero
-                onStartInvestigation={() => setIsNewInvestigationOpen(true)}
-                onExploreDemo={() => {
-                  setActiveTab('network');
-                  setFocusEntityId('ent-vicky');
-                }}
-              />
-            </div>
+            <OverviewView
+              onStartInvestigation={() => setIsIngestEvidenceOpen(true)}
+              onExploreDemo={() => {
+                setActiveTab('network');
+                setFocusEntityId('ent-vicky');
+              }}
+            />
           )}
 
           {/* VIEW B: NETWORK WORKBENCH (The Core Graph Workspace) */}
@@ -435,6 +484,7 @@ function ChakravyuhPlatformInner() {
                 entities={entities}
                 onViewInNetwork={(entIds) => handleViewPatternInNetwork(entIds)}
                 onSelectSourceTag={(tag) => setSelectedSourceTag(tag)}
+                onOpenIngestEvidence={() => setIsIngestEvidenceOpen(true)}
               />
             </div>
           )}
@@ -462,10 +512,15 @@ function ChakravyuhPlatformInner() {
           {activeTab === 'investigations' && (
             <div className="w-full h-[calc(100vh-6.5rem)] min-h-[720px]">
               <MyInvestigationsView
+                cases={cases}
                 onSelectCase={(caseId) => {
-                  if (caseId === 'case-382') {
+                  const targetCase = cases.find(c => c.id === caseId);
+                  if (targetCase) {
+                    setActiveCaseDirective(targetCase.directive);
+                    setActiveUnitName(targetCase.unit);
+                  } else if (caseId === 'case-382') {
                     setActiveCaseDirective('OP: Operation Syndicate-Viper // FIR #382/2026');
-                    setActiveUnitName('UP-STF Special Cell (Varanasi / Lucknow Range)');
+                    setActiveUnitName('UP-STF (Varanasi/Lucknow)');
                   } else if (caseId === 'case-104') {
                     setActiveCaseDirective('OP: Operation Signal-Ghost // FIR #104/2026');
                     setActiveUnitName('Cyber Crime PS Lucknow Range');
@@ -476,9 +531,12 @@ function ChakravyuhPlatformInner() {
                   setActiveTab('network');
                   setFocusEntityId('ent-vicky');
                 }}
-                onOpenNewInvestigation={() => setIsNewInvestigationOpen(true)}
+                onOpenNewInvestigation={() => setIsIngestEvidenceOpen(true)}
+                onOpenRegisterCase={() => setIsRegisterCaseOpen(true)}
                 onOpenExportReport={() => setIsDossierDocOpen(true)}
                 onOpenDossier={() => setIsDossierDocOpen(true)}
+                registrationToast={registrationToast}
+                onDismissToast={() => setRegistrationToast(null)}
               />
             </div>
           )}
@@ -501,14 +559,24 @@ function ChakravyuhPlatformInner() {
         onClose={() => setIsAuditDockOpen(false)}
       />
 
-      {/* Multi-Format Ingestion Modal (Phase 4) */}
+      {/* Multi-Format Ingestion Modal: Ingests into active case */}
       <MultiFormatIngestModal
-        isOpen={isNewInvestigationOpen}
-        onClose={() => setIsNewInvestigationOpen(false)}
+        isOpen={isIngestEvidenceOpen || isNewInvestigationOpen}
+        onClose={() => {
+          setIsIngestEvidenceOpen(false);
+          setIsNewInvestigationOpen(false);
+        }}
         onCompleteIngestion={() => {
           setActiveTab('network');
           setFocusEntityId('ent-vicky');
         }}
+      />
+
+      {/* Brand New Investigation Docket Registration Modal */}
+      <RegisterNewCaseModal
+        isOpen={isRegisterCaseOpen}
+        onClose={() => setIsRegisterCaseOpen(false)}
+        onRegisterCase={handleRegisterCase}
       />
 
       <InvestigationReportModal
@@ -566,6 +634,17 @@ function ChakravyuhPlatformInner() {
           }
         }}
         onNavigateTab={(tab) => setActiveTab(tab as any)}
+      />
+
+      {/* On-Demand Interactive Guided Tour (Spotlight Walkthrough) */}
+      <GuidedTourModal
+        isOpen={isTourActive}
+        onClose={() => setIsTourActive(false)}
+        onSwitchTab={(tab) => setActiveTab(tab)}
+        onOpenDossier={() => {
+          setIsTourActive(false);
+          setIsDossierDocOpen(true);
+        }}
       />
     </main>
   );

@@ -30,6 +30,7 @@ interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   onOpenAuditDock?: () => void;
+  isTourActive?: boolean;
 }
 
 interface NavItem {
@@ -49,6 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
   onOpenAuditDock,
+  isTourActive = false,
 }) => {
   const { user, isSuperAdmin, logout } = useAuth();
 
@@ -181,6 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
+            const isTourSpotlight = isTourActive && isActive;
 
             return (
               <button
@@ -190,7 +193,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className={`group w-full flex items-center transition-all relative ${
                   isCollapsed ? 'justify-center p-2.5 rounded-[2px]' : 'px-3 py-2 space-x-3'
                 } ${
-                  isActive
+                  isTourSpotlight
+                    ? 'bg-slate-900 text-cyan-200 font-medium border-l-2 border-cyan-400 rounded-none ring-2 ring-cyan-400/80 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                    : isActive
                     ? 'bg-slate-900 text-slate-100 font-medium border-l-2 border-blue-500 rounded-none'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent rounded-[2px]'
                 }`}
@@ -199,7 +204,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className={`shrink-0 transition-colors ${
                     isCollapsed ? 'w-5 h-5' : 'w-4 h-4'
                   } ${
-                    isActive
+                    isTourSpotlight
+                      ? 'text-cyan-400 animate-pulse'
+                      : isActive
                       ? 'text-blue-400'
                       : 'text-slate-400 group-hover:text-slate-200'
                   }`}

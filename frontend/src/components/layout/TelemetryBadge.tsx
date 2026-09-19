@@ -52,7 +52,7 @@ export const TelemetryBadge: React.FC<TelemetryBadgeProps> = ({
     >
       <div 
         onClick={handleManualPing}
-        className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-[2px] border text-[11px] font-mono select-none cursor-pointer transition-all duration-200 max-w-[190px] truncate shrink-0 ${
+        className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-[2px] border text-[11px] font-mono select-none cursor-pointer transition-all duration-200 shrink-0 ${
           isLive 
             ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300 hover:border-emerald-600' 
             : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-500'
@@ -66,11 +66,11 @@ export const TelemetryBadge: React.FC<TelemetryBadgeProps> = ({
           }`} />
         </span>
 
-        {/* Status Text: Sleek Compact Badge (max-w-[190px] truncate) */}
+        {/* Status Text: Sleek Compact Badge */}
         <span className="font-bold tracking-tight text-[11px] uppercase truncate">
           {isLive 
-            ? (compact ? 'LIVE BACKEND' : '● LIVE BACKEND')
-            : (compact ? 'AIRGAPPED' : '● INTEL CACHE (AIRGAPPED)')
+            ? (compact ? 'LIVE BACKEND' : '• LIVE BACKEND')
+            : (compact ? 'AIRGAP' : '• INTEL CACHE (AIRGAP)')
           }
         </span>
 
