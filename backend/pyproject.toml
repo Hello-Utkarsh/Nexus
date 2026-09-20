@@ -6,4 +6,14 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.141.1",
+    "motor>=3.7.1",
+    "networkx>=3.6.1",
+    "pyjwt>=2.14.0",
+    "pymongo>=4.18.1",
+    "pytest>=9.1.1",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [".venv", "venv", "__pycache__"]
+
