@@ -26,27 +26,33 @@ import {
 import { fetchIntelligenceLogs } from '../../lib/api';
 import { IndiaMapBackdrop } from '../dashboard/IndiaMapBackdrop';
 
-interface SocmintViewProps {
-  onViewEntityInNetwork?: (entityId: string) => void;
-  onMapToGraph?: (entityIds: string[], focusId?: string) => void;
-}
-
 export interface SocmintFeedItem {
   id: string;
-  platform: 'Telegram Channel' | 'X Burner Handle' | 'Encrypted Chat Intercept' | 'Darknet Onion Relay' | 'WhatsApp Forensic Extraction';
+  platform: 'Telegram Channel' | 'X Burner Handle' | 'Encrypted Chat Intercept' | 'Darknet Onion Relay' | 'WhatsApp Forensic Extraction' | string;
   channelName: string;
   handle: string;
   timestamp: string;
   rawExcerpt: string;
-  highlightedEntities: string[];
+  highlightedEntities?: string[];
+  entities?: string[];
   associatedNodeId: string;
   associatedNodeName: string;
-  threatRating: 'CRITICAL' | 'HIGH' | 'MEDIUM';
+  threatRating: 'CRITICAL' | 'HIGH' | 'MEDIUM' | string;
   riskScore: number;
   flaggedKeywords: string[];
   entityIdsToMap: string[];
   chainOfCustody?: string;
   hashStamp?: string;
+  raw_content?: string;
+}
+
+export type Signal = SocmintFeedItem;
+
+interface SocmintViewProps {
+  onViewEntityInNetwork?: (entityId: string) => void;
+  onMapToGraph?: (entityIds: string[], focusId?: string) => void;
+  initialData?: Signal[];
+  signals?: Signal[];
 }
 
 export const SOCMINT_FEED_ITEMS: SocmintFeedItem[] = [
@@ -131,59 +137,89 @@ export const SOCMINT_FEED_ITEMS: SocmintFeedItem[] = [
 
 export const SocmintView: React.FC<SocmintViewProps> = ({ 
   onViewEntityInNetwork,
-  onMapToGraph 
+  onMapToGraph,
+  initialData = SOCMINT_FEED_ITEMS,
+  signals: propSignals,
 }) => {
-  const [items, setItems] = useState<SocmintFeedItem[]>(SOCMINT_FEED_ITEMS);
-  const [selectedItemId, setSelectedItemId] = useState<string>(SOCMINT_FEED_ITEMS[0].id);
+  const effectiveInitial = (propSignals && Array.isArray(propSignals) && propSignals.length > 0)
+    ? propSignals 
+    : ((initialData && Array.isArray(initialData) && initialData.length > 0) ? initialData : (SOCMINT_FEED_ITEMS || []));
+
+  const [signals, setSignals] = useState<Signal[]>(effectiveInitial || []);
+  const [selectedItemId, setSelectedItemId] = useState<string>(
+    (effectiveInitial && effectiveInitial[0]?.id) || (SOCMINT_FEED_ITEMS && SOCMINT_FEED_ITEMS[0]?.id) || ''
+  );
   const [platformFilter, setPlatformFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isFetchingLogs, setIsFetchingLogs] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
-    fetchIntelligenceLogs().then((res) => {
-      if (isMounted && res && Array.isArray(res.incidents)) {
-        setItems(res.incidents);
+    if (propSignals && Array.isArray(propSignals)) {
+      setSignals(propSignals);
+      if (!selectedItemId && (propSignals || []).length > 0) {
+        setSelectedItemId(propSignals[0]?.id || '');
       }
-    });
+    }
+  }, [propSignals]);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchIntelligenceLogs()
+      .then((res) => {
+        if (isMounted && res && Array.isArray(res.incidents)) {
+          setSignals(res.incidents || []);
+          if ((res.incidents || []).length > 0 && !selectedItemId) {
+            setSelectedItemId(res.incidents[0]?.id || '');
+          }
+        }
+      })
+      .catch((err) => {
+        console.info('[Telemetry Client] Incident logs sync fallback', err);
+      });
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [selectedItemId]);
 
   const handleRefreshLogs = async () => {
     setIsFetchingLogs(true);
     try {
       const res = await fetchIntelligenceLogs();
       if (res && Array.isArray(res.incidents)) {
-        setItems(res.incidents);
+        setSignals(res.incidents || []);
+        if ((res.incidents || []).length > 0 && !selectedItemId) {
+          setSelectedItemId(res.incidents[0]?.id || '');
+        }
       }
     } catch (e) {
-      console.info('[Telemetry Client] Incident logs sync fallback');
+      console.info('[Telemetry Client] Incident logs sync fallback', e);
     } finally {
       setTimeout(() => setIsFetchingLogs(false), 500);
     }
   };
 
-  const filteredItems = items.filter((it) => {
+  const filteredItems = (signals || []).filter((it) => {
+    if (!it) return false;
     if (platformFilter !== 'ALL' && it.platform !== platformFilter) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
-      it.channelName.toLowerCase().includes(q) ||
-      it.handle.toLowerCase().includes(q) ||
-      it.rawExcerpt.toLowerCase().includes(q) ||
-      it.flaggedKeywords.some((k) => k.toLowerCase().includes(q))
+      (it?.channelName || '').toLowerCase().includes(q) ||
+      (it?.handle || '').toLowerCase().includes(q) ||
+      (it?.rawExcerpt || (it as any)?.raw_content || '').toLowerCase().includes(q) ||
+      (it?.flaggedKeywords || []).some((k) => (k || '').toLowerCase().includes(q))
     );
   });
 
-  const selectedItem = items.find((it) => it.id === selectedItemId) || items[0];
+  const items = filteredItems || signals || [];
+  const selectedItem = (items || []).find((it) => it?.id === selectedItemId) || (items || [])[0] || (signals || [])[0] || null;
 
-  const handleTriggerMap = (item: SocmintFeedItem) => {
+  const handleTriggerMap = (item?: SocmintFeedItem | null) => {
+    if (!item) return;
     if (onMapToGraph) {
-      onMapToGraph(item.entityIdsToMap, item.associatedNodeId);
-    } else if (onViewEntityInNetwork) {
-      onViewEntityInNetwork(item.associatedNodeId);
+      onMapToGraph(item?.entityIdsToMap || [], item?.associatedNodeId);
+    } else if (onViewEntityInNetwork && item?.associatedNodeId) {
+      onViewEntityInNetwork(item?.associatedNodeId);
     }
   };
 
@@ -262,18 +298,19 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
             <span className="uppercase font-bold tracking-wider text-slate-300">
               Scraped Incident Stream
             </span>
-            <span>{filteredItems.length} Signals</span>
+            <span>{(signals || []).length} Signals</span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
-            {filteredItems.map((item) => {
-              const isSelected = item.id === selectedItemId;
-              const isCritical = item.threatRating === 'CRITICAL';
+            {(items || []).map((item) => {
+              if (!item) return null;
+              const isSelected = item?.id === selectedItemId;
+              const isCritical = item?.threatRating === 'CRITICAL';
 
               return (
                 <div
-                  key={item.id}
-                  onClick={() => setSelectedItemId(item.id)}
+                  key={item?.id || Math.random().toString()}
+                  onClick={() => item?.id && setSelectedItemId(item.id)}
                   className={`p-3 rounded-lg border cursor-pointer transition-all ${
                     isSelected
                       ? 'bg-sky-950/70 border-sky-500 shadow-md ring-1 ring-sky-500/50'
@@ -283,18 +320,18 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
                   <div className="flex items-center justify-between">
                     <span
                       className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded border uppercase ${
-                        item.platform === 'WhatsApp Forensic Extraction'
+                        item?.platform === 'WhatsApp Forensic Extraction'
                           ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
-                          : item.platform === 'Telegram Channel'
+                          : item?.platform === 'Telegram Channel'
                           ? 'bg-sky-950 text-sky-300 border-sky-800'
-                          : item.platform === 'Encrypted Chat Intercept'
+                          : item?.platform === 'Encrypted Chat Intercept'
                           ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
-                          : item.platform === 'X Burner Handle'
+                          : item?.platform === 'X Burner Handle'
                           ? 'bg-slate-800 text-slate-300 border-slate-700'
                           : 'bg-purple-950 text-purple-300 border-purple-800'
                       }`}
                     >
-                      {item.platform}
+                      {item?.platform || 'Signal Stream'}
                     </span>
 
                     <span
@@ -302,29 +339,29 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
                         isCritical ? 'text-rose-400' : 'text-amber-400'
                       }`}
                     >
-                      RISK {item.riskScore}
+                      RISK {item?.riskScore ?? 0}
                     </span>
                   </div>
 
                   <div className="text-xs font-mono font-bold text-white mt-1.5 truncate">
-                    {item.channelName}
+                    {item?.channelName || 'Unassigned Channel'}
                   </div>
                   <div className="text-[11px] font-mono text-sky-400">
-                    {item.handle}
+                    {item?.handle || ''}
                   </div>
 
                   <p className="text-[11.5px] text-slate-300 font-sans line-clamp-2 mt-1.5 leading-snug">
-                    {item.rawExcerpt}
+                    {item?.rawExcerpt || (item as any)?.raw_content || ''}
                   </p>
 
                   <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-slate-500">
-                    <span>{item.timestamp}</span>
-                    <span className="text-slate-400">{item.highlightedEntities.length} entities</span>
+                    <span>{item?.timestamp || ''}</span>
+                    <span className="text-slate-400">{(item?.entities || []).length || (item?.highlightedEntities || []).length || 0} entities</span>
                   </div>
 
-                  {item.chainOfCustody && (
+                  {item?.chainOfCustody && (
                     <div className="mt-1.5 pt-1.5 border-t border-slate-800/60 flex items-center justify-between text-[9.5px] font-mono text-emerald-400">
-                      <span className="truncate">{item.chainOfCustody}</span>
+                      <span className="truncate">{item?.chainOfCustody}</span>
                       <Lock className="w-2.5 h-2.5 text-emerald-400 shrink-0 ml-1" />
                     </div>
                   )}
@@ -349,15 +386,15 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
             <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
               <div className="flex items-center justify-between text-xs font-mono">
                 <span className="text-slate-400">Source Channel:</span>
-                <span className="text-sky-300 font-bold">{selectedItem.channelName}</span>
+                <span className="text-sky-300 font-bold">{selectedItem?.channelName || 'N/A'}</span>
               </div>
               <div className="flex items-center justify-between text-xs font-mono">
                 <span className="text-slate-400">Handle / Origin:</span>
-                <span className="text-slate-200">{selectedItem.handle}</span>
+                <span className="text-slate-200">{selectedItem?.handle || 'N/A'}</span>
               </div>
               <div className="flex items-center justify-between text-xs font-mono">
                 <span className="text-slate-400">Intercept Timestamp:</span>
-                <span className="text-slate-200">{selectedItem.timestamp}</span>
+                <span className="text-slate-200">{selectedItem?.timestamp || 'N/A'}</span>
               </div>
             </div>
 
@@ -369,7 +406,7 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
               </div>
 
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 text-xs sm:text-[13px] leading-relaxed text-slate-200 font-sans shadow-inner">
-                "{selectedItem.rawExcerpt}"
+                "{selectedItem?.rawExcerpt || (selectedItem as any)?.raw_content || 'No intercept content available'}"
               </div>
             </div>
 
@@ -380,13 +417,13 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {selectedItem.highlightedEntities.map((ent, idx) => (
+                {((selectedItem?.entities || selectedItem?.highlightedEntities) || []).map((ent: any, idx: number) => (
                   <span
                     key={idx}
                     className="px-2.5 py-1 rounded-md bg-sky-950 text-sky-200 border border-sky-800 text-xs font-mono font-semibold flex items-center space-x-1.5 shadow-2xs"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-                    <span>{ent}</span>
+                    <span>{typeof ent === 'string' ? ent : ent?.name || 'Entity'}</span>
                   </span>
                 ))}
               </div>
@@ -419,15 +456,15 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
                 <div className="flex items-center space-x-2">
                   <span
                     className={`text-xs font-mono font-black px-2.5 py-1 rounded border uppercase ${
-                      selectedItem.threatRating === 'CRITICAL'
+                      selectedItem?.threatRating === 'CRITICAL'
                         ? 'bg-rose-950 text-rose-300 border-rose-800'
                         : 'bg-amber-950 text-amber-300 border-amber-800'
                     }`}
                   >
-                    {selectedItem.threatRating}
+                    {selectedItem?.threatRating || 'NORMAL'}
                   </span>
                   <span className="text-sm font-mono font-bold text-white">
-                    Score: {selectedItem.riskScore}/100
+                    Score: {selectedItem?.riskScore ?? 0}/100
                   </span>
                 </div>
               </div>
@@ -436,10 +473,10 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
               <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800 space-y-1">
                 <div className="text-[10px] font-mono text-slate-400 uppercase">Correlated Primary Node</div>
                 <div className="text-xs font-bold text-white truncate">
-                  {selectedItem.associatedNodeName}
+                  {selectedItem?.associatedNodeName || 'Unassigned Node'}
                 </div>
                 <div className="text-[10px] font-mono text-sky-400">
-                  ID: {selectedItem.associatedNodeId}
+                  ID: {selectedItem?.associatedNodeId || 'N/A'}
                 </div>
               </div>
 
@@ -449,7 +486,7 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
                   Flagged Keywords & Tags:
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {selectedItem.flaggedKeywords.map((tag) => (
+                  {(selectedItem?.flaggedKeywords || []).map((tag) => (
                     <span
                       key={tag}
                       className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-amber-300 border border-slate-800 font-semibold"
@@ -464,7 +501,7 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
             {/* Direct Action: Map to Syndicate Graph Button */}
             <div className="pt-4 border-t border-slate-800 space-y-2">
               <button
-                onClick={() => handleTriggerMap(selectedItem)}
+                onClick={() => selectedItem && handleTriggerMap(selectedItem)}
                 className="w-full py-2 px-4 bg-blue-700 hover:bg-blue-600 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-[2px] transition-colors border border-blue-600 flex items-center justify-center space-x-2 group"
               >
                 <span>Map to Syndicate Graph</span>
@@ -472,7 +509,7 @@ export const SocmintView: React.FC<SocmintViewProps> = ({
               </button>
 
               <div className="text-[10px] font-mono text-slate-500 text-center">
-                Isolates {selectedItem.entityIdsToMap.length} nodes on Network Workbench
+                Isolates {(selectedItem?.entityIdsToMap || []).length} nodes on Network Workbench
               </div>
             </div>
           </div>
