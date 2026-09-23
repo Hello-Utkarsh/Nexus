@@ -363,7 +363,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
         </div>
 
         {/* Sticky Input Bar at Bottom */}
-        <div className="p-3 bg-slate-950 border-t border-slate-800 shrink-0 sticky bottom-0 z-10">
+        <div className="p-3 pb-4 sm:p-4 bg-slate-950 border-t border-slate-800 shrink-0 sticky bottom-0 z-10">
           <form
             onSubmit={e => {
               e.preventDefault();
@@ -381,8 +381,9 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
             <button
               type="submit"
               disabled={!inputText.trim() || isTyping}
-              className="px-3 py-2 bg-blue-700 hover:bg-blue-600 disabled:opacity-40 text-white rounded-[2px] text-xs font-mono font-bold uppercase transition-colors flex items-center space-x-1"
+              className="px-3.5 py-2 bg-blue-700 hover:bg-blue-600 disabled:opacity-40 text-white rounded-[2px] text-xs font-mono font-bold uppercase transition-colors flex items-center space-x-1.5 shrink-0 shadow-sm"
             >
+              <span>Send</span>
               <Send className="w-3.5 h-3.5" />
             </button>
           </form>

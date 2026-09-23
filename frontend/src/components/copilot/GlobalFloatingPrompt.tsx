@@ -29,6 +29,8 @@ import {
 interface GlobalFloatingPromptProps {
   onHighlightInGraph?: (entityIds: string[], focusId?: string) => void;
   onNavigateTab?: (tab: string) => void;
+  isCopilotOpen?: boolean;
+  onOpenCopilot?: () => void;
 }
 
 export type QueryPresetType = 'interpol' | 'hawala' | 'mastermind' | 'custom';
@@ -118,6 +120,8 @@ export const TOP_WANTED_CRIMINALS: WantedCriminal[] = [
 export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
   onHighlightInGraph,
   onNavigateTab,
+  isCopilotOpen = false,
+  onOpenCopilot,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputQuery, setInputQuery] = useState('');
@@ -132,7 +136,8 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
   // Global keyboard shortcut: Ctrl+K or / to focus input; Esc to dismiss modal or minimize
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      // If onOpenCopilot is provided, global Ctrl+K is handled by the parent
+      if (!onOpenCopilot && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsOpen(prev => {
           const next = !prev;
@@ -152,7 +157,7 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeResultModal, isOpen]);
+  }, [activeResultModal, isOpen, onOpenCopilot]);
 
   // Trigger 1-second animated intelligence synthesis
   const executeQuery = (preset: QueryPresetType, customText?: string) => {
@@ -205,33 +210,33 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
 
   return (
     <>
-      {/* 1. Persistent Docked Query Terminal / Slide-Up Console (Bottom-Right, z-50) */}
-      <div className="fixed bottom-3 right-3 z-50 select-none font-mono pointer-events-auto">
-        {!isOpen ? (
-          /* Sleek, Compact Docked Terminal Tab (~140px width, ~28px height) */
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(true);
-              setTimeout(() => inputRef.current?.focus(), 80);
-            }}
-            className="flex items-center justify-between space-x-2 px-2.5 h-7 w-[140px] bg-slate-900 hover:bg-slate-850 border border-slate-700 hover:border-slate-600 rounded-[2px] shadow-xs text-slate-200 transition-colors font-mono text-[11px] group"
-            title="Open CHAKRAVYUH AI Query Terminal (Ctrl + K)"
-          >
-            <div className="flex items-center space-x-1.5 shrink-0">
-              <Terminal className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-200 transition-colors" />
-              <span className="w-1.5 h-1.5 rounded-[1px] bg-emerald-500" />
-            </div>
-            <span className="text-[11px] font-bold text-slate-200 tracking-wider uppercase">
-              Copilot
-            </span>
-            <kbd className="px-1 py-0.2 text-[8.5px] font-mono bg-slate-950 border border-slate-700 text-slate-400 rounded-[2px] group-hover:text-slate-200 shrink-0">
-              Ctrl+K
-            </kbd>
-          </button>
-        ) : (
-          /* Expanded Docked Query Terminal Console (~440px x ~520px) */
-          <div className="w-[440px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-4rem)] bg-slate-950 border border-slate-700 rounded-[3px] shadow-xl flex flex-col overflow-hidden text-slate-100">
+      {/* 1. Persistent Docked Query Terminal / Slide-Up Console (Bottom-Right, z-40) */}
+      {!isCopilotOpen && (
+        <div className="fixed bottom-3 right-4 z-40 select-none font-mono pointer-events-auto transition-all animate-in fade-in duration-200">
+          {!isOpen ? (
+            /* Bottom Right Floating Copilot Button */
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenCopilot) {
+                  onOpenCopilot();
+                } else {
+                  setIsOpen(true);
+                  setTimeout(() => inputRef.current?.focus(), 80);
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 bg-[#0b132b]/90 border border-cyan-500/40 rounded text-xs font-mono text-cyan-400 hover:bg-cyan-950/50 shadow-lg backdrop-blur transition-all"
+              title="Open AI Copilot Analyst Assistant (Ctrl+K)"
+            >
+              <span>&gt;_</span>
+              <span className="font-bold text-white">COPILOT</span>
+              <kbd className="px-1.5 py-0.5 text-[10px] bg-cyan-950/80 border border-cyan-500/30 rounded text-cyan-300">
+                Ctrl+K
+              </kbd>
+            </button>
+          ) : (
+            /* Expanded Docked Query Terminal Console (~440px x ~520px) */
+            <div className="w-[440px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-4rem)] bg-slate-950 border border-slate-700 rounded-[3px] shadow-xl flex flex-col overflow-hidden text-slate-100">
             {/* Terminal Header */}
             <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0">
               <div className="flex items-center space-x-2.5">
@@ -386,6 +391,7 @@ export const GlobalFloatingPrompt: React.FC<GlobalFloatingPromptProps> = ({
           </div>
         )}
       </div>
+    )}
 
       {/* 2. 1-Second Animated Intelligence Scanning Progress Overlay */}
       {isAnalyzing && (

@@ -570,6 +570,7 @@ function ChakravyuhPlatformInner() {
           setActiveTab('network');
           setFocusEntityId('ent-vicky');
         }}
+        onOpenRegisterCase={() => setIsRegisterCaseOpen(true)}
       />
 
       {/* Brand New Investigation Docket Registration Modal */}
@@ -619,6 +620,8 @@ function ChakravyuhPlatformInner() {
 
       {/* Global Persistent AI Prompt Dock */}
       <GlobalFloatingPrompt
+        isCopilotOpen={isCopilotOpen}
+        onOpenCopilot={() => setIsCopilotOpen(true)}
         onHighlightInGraph={(entityIds, focusId) => {
           setActiveTab('network');
           setHighlightedPatternEntityIds(entityIds);
